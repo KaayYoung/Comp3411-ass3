@@ -5,13 +5,13 @@
  *  UNSW Session 1, 2018
 */
 
+import com.sun.xml.internal.bind.v2.runtime.Coordinator;
+
 import java.util.*;
 import java.io.*;
 import java.net.*;
 
 public class Agent {
-
-
 
     final static int EAST = 0;
     final static int NORTH = 1;
@@ -20,8 +20,15 @@ public class Agent {
 
     private HashMap<Coordinate, Character> map;
 
+    private ArrayList<Coordinate> ItemToTake;
+    private ArrayList<Coordinate> TreeToCut;
+
+    private char currMove;
+
     private int currX;
     private int currY;
+    private Coordinate curr_location;
+    private int direction;
 
     private boolean isHave_axe;
     private boolean isHave_key;
@@ -31,8 +38,10 @@ public class Agent {
 
     public Agent () {
         map = new HashMap<Coordinate, Character>();
-        currX = 0;
-        currY = 0;
+        ItemToTake = new ArrayList<Coordinate>();
+        currMove = '%';
+        curr_location = new Coordinate(0, 0);
+        direction = -1;
         isHave_axe = false;
         isHave_key = false;
         isHave_raft = false;
@@ -41,7 +50,74 @@ public class Agent {
 
     public void updataMap(char view[][]) {
 
+        if (currMove == '%') {
+
+            int x = -2;
+            for (int col = 0; col < 5; col++) {
+                int y = 2;
+                for (int row = 0; row < 5; row++) {
+                    Coordinate coord = new Coordinate(x, y);
+                    if (x == 0 && y ==0) {
+                        // initialize the starting point as #
+                        direction = 0;
+                        map.put(coord, '#');
+                    } else {
+                        map.put(coord, view[row][col]);
+
+                        if (view[row][col] == 'k' || view[row][col] == 'a' || view[row][col] == 's' || view[row][col] == '$') {
+                            ItemToTake.add(coord);
+                        }
+
+                        if (view[row][col] == 'T' && !isHave_axe) {
+                            TreeToCut.add(coord);
+                        }
+                    }
+
+                    y--;
+                }
+                x++;
+            }
+        } else if (currMove == 'l') {
+            anticlockwise();
+        } else if (currMove == 'r') {
+            clockwise();
+        } else if (currMove == 'f') {
+            MoveForward();
+        }
+
+        if (map.get(curr_location) == '$') {
+
+        } else if (map.get(curr_location) == 'k') {
+
+        } else if (map.get(curr_location) == 'a') {
+
+        } else if (map.get(curr_location) == 'o') {
+
+        }
+
     }
+
+    private void MoveForward() {
+
+        if (direction == EAST) {
+
+        } else if (direction == NORTH) {
+
+        } else if (direction == WEST) {
+
+        } else if (direction == SOUTH) {
+
+        }
+
+    }
+
+    private void anticlockwise() {
+
+    }
+
+    private void clockwise() {
+    }
+
 
     public char get_action( char view[][] ) {
 
@@ -67,10 +143,7 @@ public class Agent {
     //      System.out.println ("IO error:" + e );
     //    }
     //
-
-        for () {
-
-        }
+        
 
         return 0;
     }
