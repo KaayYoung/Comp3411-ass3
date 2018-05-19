@@ -19,6 +19,7 @@ public class Agent {
     final static int INITIALCOORD = 200;
 
     private HashMap<Coordinate, Character> map;
+    private HashMap<String, Integer> backpack;
     private ArrayList<Coordinate> ItemToTake;
     private ArrayList<Coordinate> TreeToCut;
 
@@ -28,10 +29,10 @@ public class Agent {
 
     private char currMove;
 
-    private boolean isHave_axe;
-    private boolean isHave_key;
-    private boolean isHave_raft;
-    private boolean isHave_treasure;
+//    private boolean isHave_axe;
+//    private boolean isHave_key;
+//    private boolean isHave_raft;
+//    private boolean isHave_treasure;
 
     private int num_stones;
 
@@ -39,16 +40,17 @@ public class Agent {
 
     public Agent () {
         map = new HashMap<>();
+        backpack = new HashMap<>();
         ItemToTake = new ArrayList<>();
         TreeToCut = new ArrayList<>();
         TreasureCoord = new Coordinate(INITIALCOORD, INITIALCOORD);
         curr_location = new Coordinate(0, 0);
         direction = -1;
         currMove = '%';
-        isHave_axe = false;
-        isHave_key = false;
-        isHave_raft = false;
-        isHave_treasure = false;
+//        isHave_axe = false;
+//        isHave_key = false;
+//        isHave_raft = false;
+//        isHave_treasure = false;
         num_stones = 0;
     }
 
@@ -68,16 +70,20 @@ public class Agent {
             TreasureCoord.setX(INITIALCOORD);
             TreasureCoord.setY(INITIALCOORD);
             map.put(curr_location, ' ');
-            isHave_treasure = true;
+            //isHave_treasure = true;
+            backpack.put("Treasure", 1);
         } else if (map.get(curr_location) == 'k') {
-            isHave_key = true;
+            //isHave_key = true;
             map.put(curr_location, ' ');
+            backpack.put("Key", 1);
         } else if (map.get(curr_location) == 'a') {
-            isHave_axe = true;
+            //isHave_axe = true;
             map.put(curr_location, ' ');
+            backpack.put("Axe", 1);
         } else if (map.get(curr_location) == 'o') {
             num_stones++;
             map.put(curr_location, ' ');
+            backpack.put("Stones", num_stones);
         }
 
     }
@@ -102,7 +108,7 @@ public class Agent {
                         TreasureCoord = coord;
                     }
 
-                    if (view[row][col] == 'T' && !isHave_axe) {
+                    if (view[row][col] == 'T' && backpack.get("Axe") == 1) {
                         TreeToCut.add(coord);
                     }
                 }
