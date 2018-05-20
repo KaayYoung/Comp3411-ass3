@@ -9,6 +9,8 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 
+import static java.lang.Math.abs;
+
 public class Agent {
 
     final static int EAST = 0;
@@ -22,6 +24,10 @@ public class Agent {
     private HashMap<String, Integer> backpack;
     private ArrayList<Coordinate> ItemToTake;
     private ArrayList<Coordinate> TreeToCut;
+    private LinkedList<State> toTreasure;
+    private LinkedList<Character> moves_to_treasure;
+    private LinkedList<State> toStart;
+    private LinkedList<Character> moves_back_start;
 
     private Coordinate TreasureCoord;
     private Coordinate curr_location;
@@ -36,13 +42,15 @@ public class Agent {
 
     private int num_stones;
 
-
-
     public Agent () {
         map = new HashMap<>();
         backpack = new HashMap<>();
         ItemToTake = new ArrayList<>();
         TreeToCut = new ArrayList<>();
+        toTreasure = new LinkedList<>();
+        moves_to_treasure = new LinkedList<>();
+        toStart = new LinkedList<>();
+        moves_back_start = new LinkedList<>();
         TreasureCoord = new Coordinate(INITIALCOORD, INITIALCOORD);
         curr_location = new Coordinate(0, 0);
         direction = -1;
@@ -119,13 +127,13 @@ public class Agent {
         }
     }
 
-    private void clockwise() {
+    public void clockwise() {
         direction--;
         direction = direction % 4;
         if (direction < 0) direction = direction + 4;
     }
 
-    private void anticlockwise() {
+    public void anticlockwise() {
         direction++;
         direction = direction % 4;
     }
@@ -144,7 +152,7 @@ public class Agent {
         }
     }
 
-    private void MoveForward(char view[][]) {
+    public void MoveForward(char view[][]) {
 
         if (direction == EAST) {
             curr_location.setX(curr_location.getX() + 1);
@@ -192,7 +200,75 @@ public class Agent {
         }
     }
 
-    public void getTreasure() {
+
+    public LinkedList<Character> stateToMove(LinkedList<State> list_of_states) {
+
+        LinkedList<Character> move_instructions = new LinkedList<>();
+        LinkedList<Character> listOfMoves;
+
+        State curr_state = list_of_states.pollLast();
+
+        while (!list_of_states.isEmpty()) {
+            listOfMoves = moveDecision(curr_state.getCurr_coord(), list_of_states.peekLast().getCurr_coord());
+            move_instructions.addAll(listOfMoves);
+            curr_state = list_of_states.pollLast();
+        }
+
+        return move_instructions;
+    }
+
+    public LinkedList<Character> moveDecision(Coordinate curr_coord, Coordinate next_coord) {
+
+        LinkedList<Character> list_moves = new LinkedList<>();
+        int newDireciont = 0;
+
+        if (curr_coord.getX() - next_coord.getX() < 0) {
+            newDireciont = EAST;
+        } else if (curr_coord.getY() - next_coord.getY() < 0) {
+            newDireciont = NORTH;
+        } else if (curr_coord.getX() - next_coord.getX() > 0) {
+            newDireciont = WEST;
+        } else if (curr_coord.getY() - next_coord.getY() > 0) {
+            newDireciont = SOUTH;
+        }
+
+        if (direction - newDireciont < 0) {
+            if (direction - newDireciont == -3) {
+                list_moves.add('r');
+            } else {
+                while (direction - newDireciont != 0) {
+                    newDireciont--;
+                    list_moves.add('l');
+                }
+            }
+        } else if (direction - newDireciont > 0) {
+            if (direction - newDireciont == 3) {
+              list_moves.add('l');
+            } else {
+                while (direction - newDireciont != 0) {
+                    newDireciont++;
+                    list_moves.add('r');
+                }
+            }
+        }
+
+        if (map.get(next_coord) == '-' && backpack.get("Key") == 1) {
+            list_moves.add('u');
+            map.put(next_coord, ' ');
+        } else if (map.get(next_coord) == 'T' && backpack.get("Axe") == 1) {
+            list_moves.add('c');
+            backpack.put("Raft", 1);
+            map.put(next_coord, ' ');
+        } else if (map.get(next_coord) == '~' && backpack.get("Stones") > 0) {
+            backpack.put("Stones", num_stones - 1);
+            map.put(next_coord, 'O');
+        }
+        list_moves.add('f');
+        return list_moves;
+    }
+
+
+    public void expandMap(char[][] view) {
 
     }
 
@@ -222,12 +298,37 @@ public class Agent {
     //
         updateMap(view);
 
-//        if () {
-//            getTreasure();
-//        }
+        Astar findPath = new Astar();
+
+        if (TreasureCoord.getX() != 200) {
+            int initialH = abs(curr_location.getX() - TreasureCoord.getX()) + abs(curr_location.getY() - TreasureCoord.getY());
+            State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
+            toTreasure = findPath.aStarSearch(curr_state, TreasureCoord, , map, backpack);
+            if (!toTreasure.isEmpty()) moves_to_treasure = stateToMove(toTreasure);
+        }
+
+        if (!moves_to_treasure.isEmpty()) {
+            return moves_to_treasure.poll();
+        }
+
+        if (backpack.get("Treasure") == 1) {
+            int initialH = abs(curr_location.getX() - TreasureCoord.getX()) + abs(curr_location.getY() - TreasureCoord.getY());
+            State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
+            Coordinate start_point = new Coordinate(0, 0);
+            toStart = findPath.aStarSearch(curr_state, start_point, map, backpack);
+            if (!toStart.isEmpty()) moves_back_start = stateToMove(toStart);
+        }
+
+        if (!moves_back_start.isEmpty()) {
+            return moves_back_start.poll();
+        }
+
+        // TODO: keep expanding map
+        expandMap(view);
 
         return 0;
     }
+
 
     void print_view( char view[][] ) {
 

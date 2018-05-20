@@ -5,10 +5,10 @@ public class State implements Comparable<State> {
     private int h_cost;
     private int f_cost;
     private int numOfStones;
-    private boolean isHave_raft;
+    private int isHave_raft;
     private State pre_state;
 
-    public State(Coordinate coord, int g_cost, int h_cost, int numOfStones, boolean isHave_raft, State pre_state) {
+    public State(Coordinate coord, int g_cost, int h_cost, int numOfStones, int isHave_raft, State pre_state) {
         this.curr_coord = coord;
         this.g_cost = g_cost;
         this.h_cost = h_cost;
@@ -63,11 +63,11 @@ public class State implements Comparable<State> {
         this.numOfStones = numOfStones;
     }
 
-    public boolean isHave_raft() {
+    public int isHave_raft() {
         return isHave_raft;
     }
 
-    public void setHave_raft(boolean have_raft) {
+    public void setHave_raft(int have_raft) {
         isHave_raft = have_raft;
     }
 

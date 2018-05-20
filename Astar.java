@@ -10,7 +10,7 @@ public class Astar {
         this.h = new AstarHeustic();
     }
 
-    public LinkedList<State> aStarSearch(State start_state, Coordinate goal, HashMap<Coordinate, Character> map, HashMap<String, Character> backpack) {
+    public LinkedList<State> aStarSearch(State start_state, Coordinate goal, HashMap<Coordinate, Character> map, HashMap<String, Integer> backpack) {
 
         LinkedList<State> pathToGoal = new LinkedList<>();
         PriorityQueue<State> toVisit = new PriorityQueue<>();
@@ -50,7 +50,7 @@ public class Astar {
         LinkedList<State> pathToGoal = new LinkedList<>();
         int totalCost = 0;
         pathToGoal.add(curr_state);
-        while (!curr_state.getPre_state().getCurr_coord().equals(start_state.getCurr_coord())) {
+        while (!curr_state.getCurr_coord().equals(start_state.getCurr_coord())) {
             pathToGoal.add(curr_state.getPre_state());
             curr_state = curr_state.getPre_state();
             totalCost = totalCost + curr_state.getPre_state().getF_cost();
@@ -75,13 +75,13 @@ public class Astar {
         if (map.containsKey(moveToEast) && map.get(moveToEast) != '*') {
             listOfMoves.add(moveToEast);
         }
-        if (map.containsKey(moveToNorth) && map.get(moveToEast) != '*') {
+        if (map.containsKey(moveToNorth) && map.get(moveToNorth) != '*') {
             listOfMoves.add(moveToNorth);
         }
-        if (map.containsKey(moveToWest) && map.get(moveToEast) != '*') {
+        if (map.containsKey(moveToWest) && map.get(moveToWest) != '*') {
             listOfMoves.add(moveToWest);
         }
-        if (map.containsKey(moveToSouth) && map.get(moveToEast) != '*') {
+        if (map.containsKey(moveToSouth) && map.get(moveToSouth) != '*') {
             listOfMoves.add(moveToSouth);
         }
         return listOfMoves;
