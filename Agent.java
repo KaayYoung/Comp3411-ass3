@@ -32,16 +32,22 @@ public class Agent {
     private Coordinate TreasureCoord;
     private Coordinate curr_location;
     private int direction;
+    private int time = 0;
 
     private char currMove;
+    
+    Astar findPath;
 
+    
 //    private boolean isHave_axe;
 //    private boolean isHave_key;
 //    private boolean isHave_raft;
 //    private boolean isHave_treasure;
 
     private int num_stones;
-
+	private boolean comingBack;
+	private boolean goingToTreasure;
+	
     public Agent () {
         map = new HashMap<>();
         backpack = new HashMap<>();
@@ -53,8 +59,11 @@ public class Agent {
         moves_back_start = new LinkedList<>();
         TreasureCoord = new Coordinate(INITIALCOORD, INITIALCOORD);
         curr_location = new Coordinate(0, 0);
-        direction = -1;
+        direction = NORTH;
         currMove = '%';
+        goingToTreasure = false;
+        comingBack = false;
+        findPath = new Astar();
 //        isHave_axe = false;
 //        isHave_key = false;
 //        isHave_raft = false;
@@ -97,6 +106,11 @@ public class Agent {
     }
 
     public void initializeMap (char view[][]) {
+        backpack.put("Raft",0);
+        backpack.put("Key",0);
+        backpack.put("Stones",0);
+        backpack.put("Treasure",0);
+        backpack.put("Axe",0);
         int x = -2;
         for (int col = 0; col < 5; col++) {
             int y = 2;
@@ -104,7 +118,7 @@ public class Agent {
                 Coordinate coord = new Coordinate(x, y);
                 if (x == 0 && y ==0) {
                     // initialize the starting point as #
-                    direction = 0;
+//                    direction = 0;
                     map.put(coord, '#');
                 } else {
                     map.put(coord, view[row][col]);
@@ -153,7 +167,9 @@ public class Agent {
     }
 
     public void MoveForward(char view[][]) {
-
+    	System.out.println(curr_location.getX());
+    	System.out.println(curr_location.getY());
+    	
         if (direction == EAST) {
             curr_location.setX(curr_location.getX() + 1);
             int expandPart = 0;
@@ -219,7 +235,10 @@ public class Agent {
 
     public LinkedList<Character> moveDecision(Coordinate curr_coord, Coordinate next_coord) {
 
-        LinkedList<Character> list_moves = new LinkedList<>();
+//    	System.out.println("-------------");
+//    	System.out.println(direction);
+//    	System.out.println("-------------");
+    	LinkedList<Character> list_moves = new LinkedList<>();
         int newDireciont = 0;
 
         if (curr_coord.getX() - next_coord.getX() < 0) {
@@ -231,7 +250,10 @@ public class Agent {
         } else if (curr_coord.getY() - next_coord.getY() > 0) {
             newDireciont = SOUTH;
         }
-
+//        System.out.println("+++++++++++++++");
+//        System.out.println(newDireciont);
+//        System.out.println("+++++++++++++++");
+        int newDirection = newDireciont;
         if (direction - newDireciont < 0) {
             if (direction - newDireciont == -3) {
                 list_moves.add('r');
@@ -264,6 +286,7 @@ public class Agent {
             map.put(next_coord, 'O');
         }
         list_moves.add('f');
+        direction = newDirection;
         return list_moves;
     }
 
@@ -298,31 +321,49 @@ public class Agent {
     //
         updateMap(view);
 
-        Astar findPath = new Astar();
+        
 
-        if (TreasureCoord.getX() != 200) {
+        if (TreasureCoord.getX() != 200 && moves_to_treasure.isEmpty() && !goingToTreasure) {
             int initialH = abs(curr_location.getX() - TreasureCoord.getX()) + abs(curr_location.getY() - TreasureCoord.getY());
             State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
-            toTreasure = findPath.aStarSearch(curr_state, TreasureCoord, , map, backpack);
+            toTreasure = findPath.aStarSearch(curr_state, TreasureCoord, map, backpack);
+            System.out.println(toTreasure.size());
+            
             if (!toTreasure.isEmpty()) moves_to_treasure = stateToMove(toTreasure);
+            System.out.println(moves_to_treasure.size());
+            for(int i = 0; i < moves_to_treasure.size();i++) {
+            	System.out.println(moves_to_treasure.get(i));
+            }
         }
-
+//        System.exit(0);
+        
+        
         if (!moves_to_treasure.isEmpty()) {
-            return moves_to_treasure.poll();
+        	goingToTreasure = true;
+        	currMove = moves_to_treasure.poll();
+            return currMove;
         }
-
-        if (backpack.get("Treasure") == 1) {
+        
+//        System.exit(0);
+//        System.out.println(backpack.get("Treasure"));
+        if (backpack.get("Treasure") == 1 && !comingBack) {
             int initialH = abs(curr_location.getX() - TreasureCoord.getX()) + abs(curr_location.getY() - TreasureCoord.getY());
             State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
-            Coordinate start_point = new Coordinate(0, 0);
-            toStart = findPath.aStarSearch(curr_state, start_point, map, backpack);
+            Coordinate start_point = new Coordinate(0,0);
+            System.out.println(start_point.getX());
+            System.out.println(start_point.getY());
+            
+            if(start_point != null) toStart = findPath.aStarSearch(curr_state, start_point, map, backpack);
             if (!toStart.isEmpty()) moves_back_start = stateToMove(toStart);
         }
 
         if (!moves_back_start.isEmpty()) {
-            return moves_back_start.poll();
+        	comingBack = true;
+        	currMove = moves_back_start.poll();
+            return currMove;
         }
-
+        if(time==10) System.exit(0);
+        time++;
         // TODO: keep expanding map
         expandMap(view);
 

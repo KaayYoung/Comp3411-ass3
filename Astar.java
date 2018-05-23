@@ -25,13 +25,14 @@ public class Astar {
             // Get the path when we find the goal
             if (curr_state.getCurr_coord().equals(goal)) {
                 pathToGoal = traceBack(curr_state, start_state);
+                break;
             }
 
             visited.add(curr_state);
             for (Coordinate possible: possibleMoves(curr_state.getCurr_coord(), map)) {
 //                State nextState;
                 State nextState = new State(possible, curr_state.getG_cost() + 1, h.calculateHeuristic(curr_state, goal, map, backpack), curr_state.getNumOfStones(), curr_state.isHave_raft(), curr_state);
-
+                // System.out.println(nextState.getF_cost());
                 if (visited.contains(nextState)) {
                     continue;
                 }
@@ -50,12 +51,20 @@ public class Astar {
         LinkedList<State> pathToGoal = new LinkedList<>();
         int totalCost = 0;
         pathToGoal.add(curr_state);
-        while (!curr_state.getCurr_coord().equals(start_state.getCurr_coord())) {
+        while (curr_state.getPre_state() != null) {
+            System.out.println("{");
+            System.out.println(curr_state.getCurr_coord().getX());
+            System.out.println(curr_state.getCurr_coord().getY());
+            System.out.println("}");
+            totalCost = totalCost + curr_state.getPre_state().getF_cost();
             pathToGoal.add(curr_state.getPre_state());
             curr_state = curr_state.getPre_state();
-            totalCost = totalCost + curr_state.getPre_state().getF_cost();
+            // if(curr_state == null) System.out.println("1");
+            // if(curr_state.getPre_state() == null) System.out.println("2");
+            
         }
-
+//        System.out.println("break");
+//        System.exit(0);
         if (totalCost >= 10000) {
             pathToGoal.clear();
             return pathToGoal;
