@@ -1,3 +1,5 @@
+import java.util.Objects;
+
 public class State implements Comparable<State> {
 
     private Coordinate curr_coord;
@@ -77,5 +79,19 @@ public class State implements Comparable<State> {
 
     public void setPre_state(State pre_state) {
         this.pre_state = pre_state;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        State state = (State) o;
+        return Objects.equals(curr_coord, state.curr_coord);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(curr_coord);
     }
 }

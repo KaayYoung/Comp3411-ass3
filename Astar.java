@@ -56,12 +56,16 @@ public class Astar {
             System.out.println(curr_state.getPre_state().getCurr_coord().getX()+" "+curr_state.getPre_state().getCurr_coord().getY());
             System.out.println("}");
             totalCost = totalCost + curr_state.getPre_state().getF_cost();
+            System.out.println(curr_state.getPre_state().getF_cost());
+            System.out.println(curr_state.getPre_state().getH_cost());
+            //System.out.println("totalcost:" + totalCost);
             pathToGoal.add(curr_state.getPre_state());
             curr_state = curr_state.getPre_state();
             // if(curr_state == null) System.out.println("1");
             // if(curr_state.getPre_state() == null) System.out.println("2");
             
         }
+
 //        System.out.println("break");
 //        System.exit(0);
         if (totalCost >= 10000) {
@@ -80,16 +84,16 @@ public class Astar {
         Coordinate moveToWest = new Coordinate(curr_coord.getX() - 1, curr_coord.getY());
         Coordinate moveToSouth = new Coordinate(curr_coord.getX(), curr_coord.getY() - 1);
 
-        if (map.containsKey(moveToEast) && map.get(moveToEast) != '*') {
+        if (map.containsKey(moveToEast)) {
             listOfMoves.add(moveToEast);
         }
-        if (map.containsKey(moveToNorth) && map.get(moveToNorth) != '*') {
+        if (map.containsKey(moveToNorth)) {
             listOfMoves.add(moveToNorth);
         }
-        if (map.containsKey(moveToWest) && map.get(moveToWest) != '*') {
+        if (map.containsKey(moveToWest)) {
             listOfMoves.add(moveToWest);
         }
-        if (map.containsKey(moveToSouth) && map.get(moveToSouth) != '*') {
+        if (map.containsKey(moveToSouth)) {
             listOfMoves.add(moveToSouth);
         }
         return listOfMoves;

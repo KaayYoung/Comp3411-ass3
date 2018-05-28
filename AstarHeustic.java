@@ -13,13 +13,15 @@ public class AstarHeustic implements Heuristic{
         int heuristic = abs(curr_point.getX() - goal.getX()) + abs(curr_point.getY() - goal.getY());
 
         if (map.get(curr_point) == '.') {
-            heuristic = 10000;
+            heuristic = 100000;
         } else if (map.get(curr_point) == 'T' && backpack.get("Axe") == 0) {
-            heuristic = 10000;
+            heuristic = 100000;
         } else if (map.get(curr_point) == '-' && backpack.get("Key") == 0) {
-            heuristic = 10000;
+            heuristic = 100000;
         } else if (map.get(curr_point) == '~' && backpack.get("Stones") == 0 && backpack.get("Raft") == 0) {
-            heuristic = 10000;
+            heuristic = 100000;
+        } else if (map.get(curr_point) == '*'){
+            heuristic = 100000;
         }
 
         return heuristic;

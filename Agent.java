@@ -5,8 +5,7 @@
  *  UNSW Session 1, 2018
 */
 
-// 把在find item里面砍的树update到treetocut里面
-// TODO: cut tree when find the path to one item, lastmove 
+// TODO: go to 4 corners of current view, set up one global variable to store the number of expands
 
 
 import java.util.*;
@@ -53,6 +52,8 @@ public class Agent {
 	private boolean goingToItem;
 	private boolean goingToTree;
 
+	private int walkLimit;
+
     Astar findPath;
 	
     public Agent () {
@@ -82,11 +83,14 @@ public class Agent {
         goingToItem = false;
         goingToTree = false;
 
+        walkLimit = 5;
+
         findPath = new Astar();
     }
 
     public void updateMap(char view[][]) {
 
+        
         if (currMove == '%') {
             initializeMap(view);
         } else if (currMove == 'r') {
@@ -95,8 +99,7 @@ public class Agent {
             anticlockwise();
         } else if (currMove == 'f') {
             MoveForward(view);
-        } else if (currMove == 'f' && lastMove == 'c') {
-
+        } else if (lastMove == 'c') {
         	goingToTree = false;
         }
  
@@ -229,6 +232,19 @@ public class Agent {
                 expandPart++;
             }
         }
+
+        if (lastMove == 'c') {
+        	System.out.println("last:" + lastMove);
+        	System.out.println("cuuuuuut");
+           	System.out.println(curr_location.getX() + " " + curr_location.getY());
+            for (int i = 0; i < TreeToCut.size(); i++) {
+                if (curr_location.equals(TreeToCut.get(i))) {
+                   	System.out.println("removeTree:" + TreeToCut.get(i).getX() + " " + TreeToCut.get(i).getY());
+                    TreeToCut.remove(TreeToCut.get(i));
+                }
+            }
+            lastMove = '%';
+        }
     }
 
 
@@ -321,6 +337,24 @@ public class Agent {
     
     public void expandMap(char[][] view) {
 
+    	Coordinate front_location = new Coordinate(0, 0 );
+    	if (direction == EAST) {
+    		front_location.setX(curr_location.getX() + 1);
+            front_location.setY(curr_location.getY());
+    	} else if (direction == NORTH) {
+            front_location.setX(curr_location.getX());
+            front_location.setY(curr_location.getY() + 1);
+    	} else if (direction == WEST) {
+            front_location.setX(curr_location.getX() - 1);
+            front_location.setY(curr_location.getY());
+    	} else if (direction == SOUTH) {
+            front_location.setX(curr_location.getX());
+            front_location.setY(curr_location.getY() - 1);
+    	}
+
+    	if (map.get(front_location) != '*') {
+    	    MoveForward(view);
+        }
     }
 
     public char get_action( char view[][] ) {
@@ -340,6 +374,7 @@ public class Agent {
         if (!moves_to_treasure.isEmpty()) {
         	goingToTreasure = true;
         	currMove = moves_to_treasure.poll();
+
             return currMove;
         }
         
@@ -358,8 +393,12 @@ public class Agent {
         	currMove = moves_back_start.poll();
             return currMove;
         }
-        if(time==20) System.exit(0);
+        if(time==80) System.exit(0);
         time++;
+
+
+
+
 
         System.out.println(ItemToTake);
 
@@ -377,29 +416,39 @@ public class Agent {
         // make moves to item
         if (!moves_to_item.isEmpty()) {
             System.out.println(moves_to_item);
+            
             goingToItem = true;
-
-            // TODO: lastmove
             currMove = moves_to_item.poll();
+            // TODO: lastmove
+            if (currMove == 'c') {
+
+                lastMove = currMove;
+            }
+            
+
             return currMove;
         }
 
-        for (Coordinate t: TreeToCut){
-        	System.out.println(t.getX()+" "+t.getY());	
-        }
+
+
+
+
+  //       for (Coordinate t: TreeToCut){
+  //       	System.out.println(t.getX()+" "+t.getY());	
+  //       }
 		
-		if (goingToTree == false) {
-			System.out.println("false");
-		} else {
-			System.out.println("true");
-		}
+		// if (goingToTree == false) {
+		// 	System.out.println("false");
+		// } else {
+		// 	System.out.println("true");
+		// }
 
         // TODO: Cut tree
         if (!TreeToCut.isEmpty() && !goingToTree && moves_to_tree.isEmpty()) {
         	
             Coordinate curr_tree = TreeToCut.poll();
             int initialH = abs(curr_location.getX() - curr_tree.getX()) + abs(curr_location.getY() - curr_tree.getY());
-            
+            System.out.println("curr_tree:" + curr_tree.getX()+" "+curr_tree.getY());
 
             State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
             toTree = findPath.aStarSearch(curr_state, curr_tree, map, backpack);
@@ -416,6 +465,8 @@ public class Agent {
             
             currMove = moves_to_tree.poll();
             return currMove;
+        } else {
+            lastMove = currMove;
         }
         //
 
