@@ -34,6 +34,7 @@ public class Agent {
     private Coordinate TreasureCoord;
     private Coordinate curr_location;
     private int direction;
+    private int tempDirection;
 
     private int time = 0;
 
@@ -219,8 +220,13 @@ public class Agent {
 
         State curr_state = list_of_states.pollLast();
 
+        tempDirection = direction;
+
         while (!list_of_states.isEmpty()) {
             listOfMoves = moveDecision(curr_state.getCurr_coord(), list_of_states.peekLast().getCurr_coord());
+            System.out.println("=============");
+            System.out.println(listOfMoves);
+            System.out.println("=============");
             move_instructions.addAll(listOfMoves);
             curr_state = list_of_states.pollLast();
         }
@@ -236,33 +242,41 @@ public class Agent {
     	LinkedList<Character> list_moves = new LinkedList<>();
         int newDireciont = 0;
 
+
         if (curr_coord.getX() - next_coord.getX() < 0) {
+            System.out.println("E");
             newDireciont = EAST;
         } else if (curr_coord.getY() - next_coord.getY() < 0) {
+            System.out.println("N");
+            System.out.println(curr_coord.getX()+" "+curr_coord.getY());
+            System.out.println(next_coord.getX()+" "+next_coord.getY());
             newDireciont = NORTH;
         } else if (curr_coord.getX() - next_coord.getX() > 0) {
+            System.out.println("W");
             newDireciont = WEST;
         } else if (curr_coord.getY() - next_coord.getY() > 0) {
+            System.out.println("S");
             newDireciont = SOUTH;
         }
-//        System.out.println("+++++++++++++++");
-//        System.out.println(newDireciont);
-//        System.out.println("+++++++++++++++");
+
+        System.out.println("+++++++++++++++");
+        System.out.println("Curr "+direction+" New "+newDireciont);
+        System.out.println("+++++++++++++++");
         int newDirection = newDireciont;
-        if (direction - newDireciont < 0) {
-            if (direction - newDireciont == -3) {
+        if (tempDirection - newDireciont < 0) {
+            if (tempDirection - newDireciont == -3) {
                 list_moves.add('r');
             } else {
-                while (direction - newDireciont != 0) {
+                while (tempDirection - newDireciont != 0) {
                     newDireciont--;
                     list_moves.add('l');
                 }
             }
-        } else if (direction - newDireciont > 0) {
-            if (direction - newDireciont == 3) {
+        } else if (tempDirection - newDireciont > 0) {
+            if (tempDirection - newDireciont == 3) {
               list_moves.add('l');
             } else {
-                while (direction - newDireciont != 0) {
+                while (tempDirection - newDireciont != 0) {
                     newDireciont++;
                     list_moves.add('r');
                 }
@@ -281,7 +295,7 @@ public class Agent {
             map.put(next_coord, 'O');
         }
         list_moves.add('f');
-        direction = newDirection;
+        tempDirection = newDirection;
         return list_moves;
     }
 
@@ -325,12 +339,16 @@ public class Agent {
         	currMove = moves_back_start.poll();
             return currMove;
         }
-        if(time==10) System.exit(0);
+        if(time==20) System.exit(0);
         time++;
 
+        System.out.println(ItemToTake);
+
         // Find the path to item, create goingToItem variable to make sure only find one item
-        if (!ItemToTake.isEmpty() && !goingToItem) {
+        if (!ItemToTake.isEmpty() && !goingToItem && moves_to_item.isEmpty()) {
+
             Coordinate curr_Item = ItemToTake.poll();
+            System.out.println(curr_Item.getX()+" "+curr_Item.getY());
             int initialH = abs(curr_location.getX() - curr_Item.getX()) + abs(curr_location.getY() - curr_Item.getY());
             State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
             toItem = findPath.aStarSearch(curr_state, curr_Item, map, backpack);
@@ -339,10 +357,14 @@ public class Agent {
 
         // make moves to item
         if (!moves_to_item.isEmpty()) {
+            System.out.println(moves_to_item);
             goingToItem = true;
             currMove = moves_to_item.poll();
             return currMove;
         }
+
+        System.out.println("exit");
+        if(toItem.isEmpty()) System.out.println("empty");
         // TODO: keep expanding map
         expandMap(view);
 
@@ -414,6 +436,7 @@ public class Agent {
                 }
                 agent.print_view( view ); // COMMENT THIS OUT BEFORE SUBMISSION
                 action = agent.get_action( view );
+                System.out.println(action);
                 out.write( action );
               }
             }

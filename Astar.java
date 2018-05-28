@@ -53,8 +53,7 @@ public class Astar {
         pathToGoal.add(curr_state);
         while (curr_state.getPre_state() != null) {
             System.out.println("{");
-            System.out.println(curr_state.getCurr_coord().getX());
-            System.out.println(curr_state.getCurr_coord().getY());
+            System.out.println(curr_state.getPre_state().getCurr_coord().getX()+" "+curr_state.getPre_state().getCurr_coord().getY());
             System.out.println("}");
             totalCost = totalCost + curr_state.getPre_state().getF_cost();
             pathToGoal.add(curr_state.getPre_state());
