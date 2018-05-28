@@ -5,6 +5,10 @@
  *  UNSW Session 1, 2018
 */
 
+// 把在find item里面砍的树update到treetocut里面
+// TODO: cut tree when find the path to one item, lastmove 
+
+
 import java.util.*;
 import java.io.*;
 import java.net.*;
@@ -30,6 +34,8 @@ public class Agent {
     private LinkedList<Character> moves_to_item;
     private LinkedList<State> toStart;
     private LinkedList<Character> moves_back_start;
+    private LinkedList<State> toTree;
+    private LinkedList<Character> moves_to_tree;
 
     private Coordinate TreasureCoord;
     private Coordinate curr_location;
@@ -38,12 +44,14 @@ public class Agent {
 
     private int time = 0;
 
+    private char lastMove;
     private char currMove;
 
     private int num_stones;
 	private boolean comingBack;
 	private boolean goingToTreasure;
 	private boolean goingToItem;
+	private boolean goingToTree;
 
     Astar findPath;
 	
@@ -58,14 +66,22 @@ public class Agent {
         moves_to_item = new LinkedList<>();
         toStart = new LinkedList<>();
         moves_back_start = new LinkedList<>();
+        toTree = new LinkedList<>();
+        moves_to_tree = new LinkedList<>();
+
         TreasureCoord = new Coordinate(INITIALCOORD, INITIALCOORD);
         curr_location = new Coordinate(0, 0);
         direction = NORTH;
+
+        lastMove = '%';
         currMove = '%';
         num_stones = 0;
+
+        comingBack = false;
         goingToTreasure = false;
         goingToItem = false;
-        comingBack = false;
+        goingToTree = false;
+
         findPath = new Astar();
     }
 
@@ -79,8 +95,11 @@ public class Agent {
             anticlockwise();
         } else if (currMove == 'f') {
             MoveForward(view);
-        }
+        } else if (currMove == 'f' && lastMove == 'c') {
 
+        	goingToTree = false;
+        }
+ 
         if (map.get(curr_location) == '$') {
             TreasureCoord.setX(INITIALCOORD);
             TreasureCoord.setY(INITIALCOORD);
@@ -128,7 +147,7 @@ public class Agent {
                         TreasureCoord = coord;
                     }
 
-                    if (view[row][col] == 'T' && backpack.get("Axe") == 1) {
+                    if (view[row][col] == 'T') {
                         TreeToCut.add(coord);
                     }
                 }
@@ -154,13 +173,13 @@ public class Agent {
 
     public void isItemInView (char item, Coordinate coord) {
         if (item == 'k' || item == 'a' || item == 'o') {
-            ItemToTake.add(coord);
+            if (!ItemToTake.contains(coord)) ItemToTake.add(coord);
         }
         if (item == '$') {
             TreasureCoord = coord;
         }
         if (item == 'T') {
-            TreeToCut.add(coord);
+        	if (!TreeToCut.contains(coord)) TreeToCut.add(coord);
         }
     }
 
@@ -283,6 +302,7 @@ public class Agent {
             }
         }
 
+
         if (map.get(next_coord) == '-' && backpack.get("Key") == 1) {
             list_moves.add('u');
             map.put(next_coord, ' ');
@@ -298,8 +318,7 @@ public class Agent {
         tempDirection = newDirection;
         return list_moves;
     }
-
-
+    
     public void expandMap(char[][] view) {
 
     }
@@ -359,12 +378,49 @@ public class Agent {
         if (!moves_to_item.isEmpty()) {
             System.out.println(moves_to_item);
             goingToItem = true;
+
+            // TODO: lastmove
             currMove = moves_to_item.poll();
             return currMove;
         }
 
+        for (Coordinate t: TreeToCut){
+        	System.out.println(t.getX()+" "+t.getY());	
+        }
+		
+		if (goingToTree == false) {
+			System.out.println("false");
+		} else {
+			System.out.println("true");
+		}
+
+        // TODO: Cut tree
+        if (!TreeToCut.isEmpty() && !goingToTree && moves_to_tree.isEmpty()) {
+        	
+            Coordinate curr_tree = TreeToCut.poll();
+            int initialH = abs(curr_location.getX() - curr_tree.getX()) + abs(curr_location.getY() - curr_tree.getY());
+            
+
+            State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
+            toTree = findPath.aStarSearch(curr_state, curr_tree, map, backpack);
+            if (!toTree.isEmpty()) moves_to_tree = stateToMove(toTree);
+        }
+
+        if (!moves_to_tree.isEmpty()) {
+        	if (lastMove == 'c') {
+				goingToTree = false;
+        	} else {
+        		goingToTree = true;
+        		lastMove = moves_to_tree.peek();
+        	}
+            
+            currMove = moves_to_tree.poll();
+            return currMove;
+        }
+        //
+
         System.out.println("exit");
-        if(toItem.isEmpty()) System.out.println("empty");
+        if(toTree.isEmpty()) System.out.println("empty");
         // TODO: keep expanding map
         expandMap(view);
 
