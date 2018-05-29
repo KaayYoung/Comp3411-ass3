@@ -7,7 +7,6 @@
 
 // TODO: go to 4 corners of current view, set up one global variable to store the number of expands
 
-
 import java.util.*;
 import java.io.*;
 import java.net.*;
@@ -25,6 +24,8 @@ public class Agent {
 
     private HashMap<Coordinate, Character> map;
     private HashMap<String, Integer> backpack;
+    private HashMap<Coordinate, Integer> explored;
+
     private LinkedList<Coordinate> ItemToTake;
     private LinkedList<Coordinate> TreeToCut;
     private LinkedList<State> toTreasure;
@@ -35,6 +36,7 @@ public class Agent {
     private LinkedList<Character> moves_back_start;
     private LinkedList<State> toTree;
     private LinkedList<Character> moves_to_tree;
+    private LinkedList<Character> expand_map_steps;
 
     private Coordinate TreasureCoord;
     private Coordinate curr_location;
@@ -52,13 +54,17 @@ public class Agent {
 	private boolean goingToItem;
 	private boolean goingToTree;
 
-	private int walkLimit;
+	private boolean goAround;
+    private boolean expand_water;
+    private boolean onWater;
 
     Astar findPath;
 	
     public Agent () {
         map = new HashMap<>();
         backpack = new HashMap<>();
+        explored = new HashMap<>();
+
         ItemToTake = new LinkedList<>();
         TreeToCut = new LinkedList<>();
         toTreasure = new LinkedList<>();
@@ -69,10 +75,12 @@ public class Agent {
         moves_back_start = new LinkedList<>();
         toTree = new LinkedList<>();
         moves_to_tree = new LinkedList<>();
+        expand_map_steps = new LinkedList<>();
 
         TreasureCoord = new Coordinate(INITIALCOORD, INITIALCOORD);
         curr_location = new Coordinate(0, 0);
         direction = NORTH;
+        tempDirection = NORTH;
 
         lastMove = '%';
         currMove = '%';
@@ -83,7 +91,9 @@ public class Agent {
         goingToItem = false;
         goingToTree = false;
 
-        walkLimit = 5;
+        goAround = false;
+        expand_water = false;
+        onWater = false;
 
         findPath = new Astar();
     }
@@ -140,8 +150,10 @@ public class Agent {
                     // initialize the starting point as #
 //                    direction = 0;
                     map.put(coord, '#');
+                    explored.put(coord, 0);
                 } else {
                     map.put(coord, view[row][col]);
+                    explored.put(coord, 0);
                     if (view[row][col] == 'k' || view[row][col] == 'a' || view[row][col] == 'o' ) {
                         ItemToTake.add(coord);
                     }
@@ -159,6 +171,7 @@ public class Agent {
             }
             x++;
         }
+        System.out.println("ininininininini");
     }
 
     public void clockwise() {
@@ -187,7 +200,9 @@ public class Agent {
     }
 
     public void MoveForward(char view[][]) {
-    	
+
+        explored.put(curr_location, explored.get(curr_location) +  1);
+        System.out.println("curr_move in moveforward:" + currMove);
         if (direction == EAST) {
             curr_location.setX(curr_location.getX() + 1);
             int expandPart = 0;
@@ -198,6 +213,7 @@ public class Agent {
                 Coordinate expandRow = new Coordinate(curr_location.getX() + 2, curr_location.getY() + row);
                 char expandChar = view[0][expandPart];
                 map.put(expandRow, expandChar);
+                explored.put(expandRow, 0);
                 isItemInView(expandChar, expandRow);
                 expandPart++;
             }
@@ -208,6 +224,7 @@ public class Agent {
                 Coordinate expandCol = new Coordinate(curr_location.getX() + col, curr_location.getY() + 2);
                 char expandChar = view[0][expandPart];
                 map.put(expandCol, expandChar);
+                explored.put(expandCol, 0);
                 isItemInView(expandChar, expandCol);
                 expandPart++;
             }
@@ -218,6 +235,7 @@ public class Agent {
                 Coordinate expandRow = new Coordinate(curr_location.getX() - 2, curr_location.getY() + row);
                 char expandChar = view[0][expandPart];
                 map.put(expandRow, expandChar);
+                explored.put(expandRow, 0);
                 isItemInView(expandChar, expandRow);
                 expandPart++;
             }
@@ -228,6 +246,7 @@ public class Agent {
                 Coordinate expandCol = new Coordinate(curr_location.getX() + col, curr_location.getY() - 2);
                 char expandChar = view[0][expandPart];
                 map.put(expandCol, expandChar);
+                explored.put(expandCol, 0);
                 isItemInView(expandChar, expandCol);
                 expandPart++;
             }
@@ -334,28 +353,47 @@ public class Agent {
         tempDirection = newDirection;
         return list_moves;
     }
-    
+
+
     public void expandMap(char[][] view) {
 
-    	Coordinate front_location = new Coordinate(0, 0 );
-    	if (direction == EAST) {
-    		front_location.setX(curr_location.getX() + 1);
-            front_location.setY(curr_location.getY());
-    	} else if (direction == NORTH) {
-            front_location.setX(curr_location.getX());
-            front_location.setY(curr_location.getY() + 1);
-    	} else if (direction == WEST) {
-            front_location.setX(curr_location.getX() - 1);
-            front_location.setY(curr_location.getY());
-    	} else if (direction == SOUTH) {
-            front_location.setX(curr_location.getX());
-            front_location.setY(curr_location.getY() - 1);
-    	}
+    	char front_view = view[1][2];
+    	char left_view = view[2][1];
 
-    	if (map.get(front_location) != '*') {
-    	    MoveForward(view);
+    	char next_step = '%';
+
+    	if (checkObstacle(left_view)) {
+    	    goAround = true;
         }
+
+        if (checkObstacle(front_view)) {
+    	    next_step = 'r';
+        } else {
+    	    next_step = 'f';
+        }
+
+        if (goAround && !checkObstacle(left_view) && currMove != 'l') {
+    	    next_step = 'l';
+        }
+
+        if (explored.get(curr_location) > 2) {
+    	    goAround = false;
+            if (backpack.get("Raft") == 1 || onWater == true) {
+                expand_water = true;
+            }
+        }
+        expand_map_steps.add(next_step);
     }
+
+
+    private boolean checkObstacle(char cell) {
+        if (cell == 'T' || cell == '-' || cell == '*' || cell == '~' || cell == '.') {
+            if (cell == '~' && expand_water == true) return false;
+            return true;
+        }
+        return false;
+    }
+
 
     public char get_action( char view[][] ) {
 
@@ -401,12 +439,15 @@ public class Agent {
 
 
         System.out.println(ItemToTake);
+        for (Coordinate t: ItemToTake) {
+        	System.out.println("t:" + t.getX() + " " + t.getY());
+        }
+        
 
         // Find the path to item, create goingToItem variable to make sure only find one item
         if (!ItemToTake.isEmpty() && !goingToItem && moves_to_item.isEmpty()) {
-
             Coordinate curr_Item = ItemToTake.poll();
-            System.out.println(curr_Item.getX()+" "+curr_Item.getY());
+            System.out.println("curr_Item:" + curr_Item.getX()+" "+curr_Item.getY());
             int initialH = abs(curr_location.getX() - curr_Item.getX()) + abs(curr_location.getY() - curr_Item.getY());
             State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
             toItem = findPath.aStarSearch(curr_state, curr_Item, map, backpack);
@@ -415,7 +456,7 @@ public class Agent {
 
         // make moves to item
         if (!moves_to_item.isEmpty()) {
-            System.out.println(moves_to_item);
+            System.out.println("moves in item:" + moves_to_item);
             
             goingToItem = true;
             currMove = moves_to_item.poll();
@@ -464,18 +505,24 @@ public class Agent {
         	}
             
             currMove = moves_to_tree.poll();
+            //System.out.println("currMove2:" + currMove);
             return currMove;
         } else {
             lastMove = currMove;
         }
-        //
+        
+
+
 
         System.out.println("exit");
         if(toTree.isEmpty()) System.out.println("empty");
-        // TODO: keep expanding map
-        expandMap(view);
 
-        return 0;
+
+        // TODO: keep expanding map
+        // expandMap(view);
+        // currMove = expand_map_steps.poll();
+
+        return currMove = 'z';
     }
 
 

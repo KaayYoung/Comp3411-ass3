@@ -31,7 +31,10 @@ public class Astar {
             visited.add(curr_state);
             for (Coordinate possible: possibleMoves(curr_state.getCurr_coord(), map)) {
 //                State nextState;
-                State nextState = new State(possible, curr_state.getG_cost() + 1, h.calculateHeuristic(curr_state, goal, map, backpack), curr_state.getNumOfStones(), curr_state.isHave_raft(), curr_state);
+                System.out.println("possible:" + possible.getX() + " " + possible.getY() + "curr_state:" + curr_state.getCurr_coord().getX() + curr_state.getCurr_coord().getY());
+                //System.out.println("keeeeeeeey:" + backpack.get("Key"));
+                State nextState = new State(possible, curr_state.getG_cost() + 1, 0, curr_state.getNumOfStones(), curr_state.isHave_raft(), curr_state);
+                nextState.setH_cost(h.calculateHeuristic(nextState, goal, map, backpack));
                 // System.out.println(nextState.getF_cost());
                 if (visited.contains(nextState)) {
                     continue;
@@ -52,12 +55,12 @@ public class Astar {
         int totalCost = 0;
         pathToGoal.add(curr_state);
         while (curr_state.getPre_state() != null) {
-            System.out.println("{");
-            System.out.println(curr_state.getPre_state().getCurr_coord().getX()+" "+curr_state.getPre_state().getCurr_coord().getY());
-            System.out.println("}");
+            // System.out.println("{");
+            // System.out.println(curr_state.getPre_state().getCurr_coord().getX()+" "+curr_state.getPre_state().getCurr_coord().getY());
+            // System.out.println("}");
             totalCost = totalCost + curr_state.getPre_state().getF_cost();
-            System.out.println(curr_state.getPre_state().getF_cost());
-            System.out.println(curr_state.getPre_state().getH_cost());
+            System.out.println("Pre_fcost:" + curr_state.getPre_state().getF_cost());
+            System.out.println("Pre_hcost:" + curr_state.getPre_state().getH_cost());
             //System.out.println("totalcost:" + totalCost);
             pathToGoal.add(curr_state.getPre_state());
             curr_state = curr_state.getPre_state();
@@ -65,7 +68,7 @@ public class Astar {
             // if(curr_state.getPre_state() == null) System.out.println("2");
             
         }
-
+        System.out.println("totalcost:" + totalCost);
 //        System.out.println("break");
 //        System.exit(0);
         if (totalCost >= 10000) {
@@ -84,16 +87,16 @@ public class Astar {
         Coordinate moveToWest = new Coordinate(curr_coord.getX() - 1, curr_coord.getY());
         Coordinate moveToSouth = new Coordinate(curr_coord.getX(), curr_coord.getY() - 1);
 
-        if (map.containsKey(moveToEast)) {
+        if (map.containsKey(moveToEast) && map.get(moveToEast) != '*') {
             listOfMoves.add(moveToEast);
         }
-        if (map.containsKey(moveToNorth)) {
+        if (map.containsKey(moveToNorth) && map.get(moveToNorth) != '*') {
             listOfMoves.add(moveToNorth);
         }
-        if (map.containsKey(moveToWest)) {
+        if (map.containsKey(moveToWest) && map.get(moveToWest) != '*') {
             listOfMoves.add(moveToWest);
         }
-        if (map.containsKey(moveToSouth)) {
+        if (map.containsKey(moveToSouth) && map.get(moveToSouth) != '*') {
             listOfMoves.add(moveToSouth);
         }
         return listOfMoves;
