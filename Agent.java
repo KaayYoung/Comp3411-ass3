@@ -121,15 +121,18 @@ public class Agent {
         } else if (map.get(curr_location) == 'k') {
             map.put(curr_location, ' ');
             goingToItem = false;
+            ItemToTake.remove(curr_location);
             backpack.put("Key", 1);
         } else if (map.get(curr_location) == 'a') {
             map.put(curr_location, ' ');
             goingToItem = false;
+            ItemToTake.remove(curr_location);
             backpack.put("Axe", 1);
         } else if (map.get(curr_location) == 'o') {
             num_stones++;
             map.put(curr_location, ' ');
             goingToItem = false;
+            ItemToTake.remove(curr_location);
             backpack.put("Stones", num_stones);
         }
 
@@ -189,7 +192,7 @@ public class Agent {
 
     public void isItemInView (char item, Coordinate coord) {
         if (item == 'k' || item == 'a' || item == 'o') {
-            if (!ItemToTake.contains(coord)) ItemToTake.add(coord);
+            if (!ItemToTake.contains(coord) && map.containsKey(coord)) ItemToTake.add(coord);
         }
         if (item == '$') {
             TreasureCoord = coord;
@@ -220,7 +223,7 @@ public class Agent {
         } else if (direction == NORTH) {
             curr_location.setY(curr_location.getY() + 1);
             int expandPart = 0;
-            for (int col = 2; col >= -2; col--) {
+            for (int col = -2; col <= 2; col++) {
                 Coordinate expandCol = new Coordinate(curr_location.getX() + col, curr_location.getY() + 2);
                 char expandChar = view[0][expandPart];
                 map.put(expandCol, expandChar);
@@ -242,7 +245,7 @@ public class Agent {
         } else if (direction == SOUTH) {
             curr_location.setY(curr_location.getY() - 1);
             int expandPart = 0;
-            for (int col = -2; col <= 2; col ++) {
+            for (int col = 2; col >= -2; col --) {
                 Coordinate expandCol = new Coordinate(curr_location.getX() + col, curr_location.getY() - 2);
                 char expandChar = view[0][expandPart];
                 map.put(expandCol, expandChar);
@@ -401,6 +404,7 @@ public class Agent {
 
         // Find the path to treasure
         if (TreasureCoord.getX() != 200 && moves_to_treasure.isEmpty() && !goingToTreasure) {
+        	System.out.println("On the way to Treasure");
             int initialH = abs(curr_location.getX() - TreasureCoord.getX()) + abs(curr_location.getY() - TreasureCoord.getY());
             State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
             toTreasure = findPath.aStarSearch(curr_state, TreasureCoord, map, backpack);
@@ -418,6 +422,7 @@ public class Agent {
         
         // Find the path to come back
         if (backpack.get("Treasure") == 1 && !comingBack) {
+        	System.out.println("Back to starting point from treasure");
             int initialH = abs(curr_location.getX() - TreasureCoord.getX()) + abs(curr_location.getY() - TreasureCoord.getY());
             State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
             Coordinate start_point = new Coordinate(0,0);
@@ -431,7 +436,7 @@ public class Agent {
         	currMove = moves_back_start.poll();
             return currMove;
         }
-        if(time==80) System.exit(0);
+        if(time==50) System.exit(0);
         time++;
 
 
@@ -440,13 +445,15 @@ public class Agent {
 
         System.out.println(ItemToTake);
         for (Coordinate t: ItemToTake) {
-        	System.out.println("t:" + t.getX() + " " + t.getY());
+        	System.out.print("t:" + t.getX() + " " + t.getY() + "   ");
+        	System.out.println("map_coor:" + map.get(t));
         }
         
 
         // Find the path to item, create goingToItem variable to make sure only find one item
         if (!ItemToTake.isEmpty() && !goingToItem && moves_to_item.isEmpty()) {
-            Coordinate curr_Item = ItemToTake.poll();
+            Coordinate curr_Item = ItemToTake.peek();
+            System.out.println("polledItem:" + curr_Item.getX() + " " + curr_Item.getY());
             System.out.println("curr_Item:" + curr_Item.getX()+" "+curr_Item.getY());
             int initialH = abs(curr_location.getX() - curr_Item.getX()) + abs(curr_location.getY() - curr_Item.getY());
             State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);

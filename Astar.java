@@ -31,11 +31,11 @@ public class Astar {
             visited.add(curr_state);
             for (Coordinate possible: possibleMoves(curr_state.getCurr_coord(), map)) {
 //                State nextState;
-                System.out.println("possible:" + possible.getX() + " " + possible.getY() + "curr_state:" + curr_state.getCurr_coord().getX() + curr_state.getCurr_coord().getY());
+                //System.out.println("possible:" + possible.getX() + " " + possible.getY() + "curr_state:" + curr_state.getCurr_coord().getX() + curr_state.getCurr_coord().getY());
                 //System.out.println("keeeeeeeey:" + backpack.get("Key"));
                 State nextState = new State(possible, curr_state.getG_cost() + 1, 0, curr_state.getNumOfStones(), curr_state.isHave_raft(), curr_state);
                 nextState.setH_cost(h.calculateHeuristic(nextState, goal, map, backpack));
-                // System.out.println(nextState.getF_cost());
+                //System.out.println(nextState.getF_cost());
                 if (visited.contains(nextState)) {
                     continue;
                 }
