@@ -37,9 +37,9 @@ public class Astar {
                 State nextState = new State(possible, curr_state.getG_cost() + 1, 0, curr_state.getNumOfStones(), curr_state.isHave_raft(), curr_state);
                 
 
-                if (map.get(curr_state.getCurr_coord()) == '~' && map.get(possible) != '~') {
-                    nextState.setHave_raft(0);
-                }
+                // if (map.get(curr_state.getCurr_coord()) == '~' && map.get(possible) != '~') {
+                //     nextState.setHave_raft(0);
+                // }
 
                 int hCost = h.calculateHeuristic(nextState, goal, map, backpack, expand_water);
                 nextState.setH_cost(hCost);
@@ -74,14 +74,14 @@ public class Astar {
             totalCost = totalCost + curr_state.getPre_state().getF_cost();
             System.out.println("Pre_fcost:" + curr_state.getPre_state().getF_cost());
             System.out.println("Pre_hcost:" + curr_state.getPre_state().getH_cost());
-            //System.out.println("totalcost:" + totalCost);
+            System.out.println("totalcost:" + totalCost);
             pathToGoal.add(curr_state.getPre_state());
             curr_state = curr_state.getPre_state();
             // if(curr_state == null) System.out.println("1");
             // if(curr_state.getPre_state() == null) System.out.println("2");
             
         }
-        System.out.println("totalcost:" + totalCost);
+        // System.out.println("totalcost:" + totalCost);
 //        System.out.println("break");
 //        System.exit(0);
         if (totalCost >= 100000) {
