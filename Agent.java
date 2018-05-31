@@ -24,7 +24,7 @@ public class Agent {
 
     private HashMap<Coordinate, Character> map;
     private static HashMap<String, Integer> backpack;
-    private HashMap<Coordinate, Integer> explored;
+    private static HashMap<Coordinate, Integer> explored;
 
     private LinkedList<Coordinate> ItemToTake;
     private LinkedList<Coordinate> TreeToCut;
@@ -39,7 +39,7 @@ public class Agent {
     private LinkedList<Character> expand_map_steps;
 
     private Coordinate TreasureCoord;
-    private Coordinate curr_location;
+    private static Coordinate curr_location;
     private int direction;
     private int tempDirection;
 
@@ -53,6 +53,7 @@ public class Agent {
 	private boolean backHome;
 	private boolean goingToItem;
 	private boolean goingToTree;
+    private boolean found;
 
 	private boolean goAround;
     private boolean expand_water;
@@ -89,6 +90,7 @@ public class Agent {
         backHome = false;
         goingToItem = false;
         goingToTree = false;
+        found = false;
 
         goAround = false;
         expand_water = false;
@@ -112,8 +114,9 @@ public class Agent {
         }
  
         if (map.get(curr_location) == '$') {
-            TreasureCoord.setX(INITIALCOORD);
-            TreasureCoord.setY(INITIALCOORD);
+            // TreasureCoord.setX(INITIALCOORD);
+            // TreasureCoord.setY(INITIALCOORD);
+            found = true;
             map.put(curr_location, ' ');
             backpack.put("Treasure", 1);
         } else if (map.get(curr_location) == 'k') {
@@ -214,7 +217,7 @@ public class Agent {
                 Coordinate expandRow = new Coordinate(curr_location.getX() + 2, curr_location.getY() + row);
                 char expandChar = view[0][expandPart];
                 map.put(expandRow, expandChar);
-                explored.put(expandRow, 0);
+                if(!explored.containsKey(expandRow)) explored.put(expandRow, 0);
                 isItemInView(expandChar, expandRow);
                 expandPart++;
             }
@@ -225,7 +228,7 @@ public class Agent {
                 Coordinate expandCol = new Coordinate(curr_location.getX() + col, curr_location.getY() + 2);
                 char expandChar = view[0][expandPart];
                 map.put(expandCol, expandChar);
-                explored.put(expandCol, 0);
+                if(!explored.containsKey(expandCol)) explored.put(expandCol, 0);
                 isItemInView(expandChar, expandCol);
                 expandPart++;
             }
@@ -236,7 +239,7 @@ public class Agent {
                 Coordinate expandRow = new Coordinate(curr_location.getX() - 2, curr_location.getY() + row);
                 char expandChar = view[0][expandPart];
                 map.put(expandRow, expandChar);
-                explored.put(expandRow, 0);
+                if(!explored.containsKey(expandRow)) explored.put(expandRow, 0);
                 isItemInView(expandChar, expandRow);
                 expandPart++;
             }
@@ -247,7 +250,7 @@ public class Agent {
                 Coordinate expandCol = new Coordinate(curr_location.getX() + col, curr_location.getY() - 2);
                 char expandChar = view[0][expandPart];
                 map.put(expandCol, expandChar);
-                explored.put(expandCol, 0);
+                if(!explored.containsKey(expandCol)) explored.put(expandCol, 0);
                 isItemInView(expandChar, expandCol);
                 expandPart++;
             }
@@ -382,7 +385,8 @@ public class Agent {
     	    next_step = 'l';
         }
 
-        if (explored.get(curr_location) > 3) {
+        if (2 < explored.get(curr_location) && explored.get(curr_location) < 5) {
+            // System.exit(0);
     	    goAround = false;
             if (backpack.get("Raft") == 1) {
             	System.out.println("expand_water:true");
@@ -407,31 +411,23 @@ public class Agent {
         updateMap(view);
 
         // Find the path to treasure
-        if (TreasureCoord.getX() != 200 && !takeTreasure){ // && !goingToTreasure) {
+        if (found && !takeTreasure){ // && !goingToTreasure) {
         	System.out.println("On the way to Treasure");
-            int initialH = abs(curr_location.getX() - TreasureCoord.getX()) + abs(curr_location.getY() - TreasureCoord.getY());
-            State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
+            // int initialH = abs(curr_location.getX() - TreasureCoord.getX()) + abs(curr_location.getY() - TreasureCoord.getY());
+            State curr_state = new State(curr_location, 0, 0, backpack.get("Stones"), backpack.get("Raft"), null);
             toTreasure = findPath.aStarSearch(curr_state, TreasureCoord, map, backpack, expand_water);
             
             if (!toTreasure.isEmpty()) moves_to_treasure = stateToMove(toTreasure);
             if (!moves_to_treasure.isEmpty()) takeTreasure = true; 
         }
 
-        // make moves to treasure
-        // if (!moves_to_treasure.isEmpty()) {
-        // 	goingToTreasure = true;
-        // 	currMove = moves_to_treasure.poll();
-
-        //     return currMove;
-        // }
-        
         // Find the path to come back
-        if (TreasureCoord.getX() != 200 && takeTreasure){ //&& !comingBack) {
+        if (found && takeTreasure){ //&& !comingBack) {
         	System.out.println("Back to starting point from treasure");
-            int initialH = abs(curr_location.getX() - TreasureCoord.getX()) + abs(curr_location.getY() - TreasureCoord.getY());
-            State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
+            // int initialH = abs(curr_location.getX() - TreasureCoord.getX()) + abs(curr_location.getY() - TreasureCoord.getY());
+            State curr_state = new State(TreasureCoord, 0, 0, backpack.get("Stones"), backpack.get("Raft"), null);
             Coordinate start_point = new Coordinate(0,0);
-            if(start_point != null) toStart = findPath.aStarSearch(curr_state, start_point, map, backpack, expand_water);
+            toStart = findPath.aStarSearch(curr_state, start_point, map, backpack, expand_water);
             if (!toStart.isEmpty()) moves_back_start = stateToMove(toStart);
             if (!moves_back_start.isEmpty()) {
             	backHome = true;
@@ -456,7 +452,7 @@ public class Agent {
         // 	currMove = moves_back_start.poll();
         //     return currMove;
         // }
-        if(time==90) System.exit(0);
+        if(time==300) System.exit(0);
         time++;
 
 
@@ -621,6 +617,7 @@ public class Agent {
                 out.write( action );
                 System.out.println("Stones:" + backpack.get("Stones"));
                 System.out.println("Raft:" + backpack.get("Raft"));
+                System.out.println("explored:" + explored.get(curr_location));
               }
             }
             catch( IOException e ) {
