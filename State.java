@@ -14,7 +14,6 @@ public class State implements Comparable<State> {
         this.curr_coord = coord;
         this.g_cost = g_cost;
         this.h_cost = h_cost;
-        this.f_cost = g_cost + h_cost;
         this.numOfStones = numOfStones;
         this.isHave_raft = isHave_raft;
         this.pre_state = pre_state;

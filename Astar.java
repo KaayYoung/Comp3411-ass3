@@ -10,7 +10,7 @@ public class Astar {
         this.h = new AstarHeustic();
     }
 
-    public LinkedList<State> aStarSearch(State start_state, Coordinate goal, HashMap<Coordinate, Character> map, HashMap<String, Integer> backpack) {
+    public LinkedList<State> aStarSearch(State start_state, Coordinate goal, HashMap<Coordinate, Character> map, HashMap<String, Integer> backpack, boolean expand_water) {
 
         LinkedList<State> pathToGoal = new LinkedList<>();
         PriorityQueue<State> toVisit = new PriorityQueue<>();
@@ -33,8 +33,21 @@ public class Astar {
 //                State nextState;
                 //System.out.println("possible:" + possible.getX() + " " + possible.getY() + "curr_state:" + curr_state.getCurr_coord().getX() + curr_state.getCurr_coord().getY());
                 //System.out.println("keeeeeeeey:" + backpack.get("Key"));
+                
                 State nextState = new State(possible, curr_state.getG_cost() + 1, 0, curr_state.getNumOfStones(), curr_state.isHave_raft(), curr_state);
-                nextState.setH_cost(h.calculateHeuristic(nextState, goal, map, backpack));
+                
+
+                if (map.get(curr_state.getCurr_coord()) == '~' && map.get(possible) != '~') {
+                    nextState.setHave_raft(0);
+                }
+
+                int hCost = h.calculateHeuristic(nextState, goal, map, backpack, expand_water);
+                nextState.setH_cost(hCost);
+                if (map.get(curr_state.getCurr_coord()) == '~' && hCost < 100000) {
+                    curr_state.setNumOfStones(curr_state.getNumOfStones() - 1);
+                } 
+                
+                nextState.setF_cost(nextState.getG_cost() + nextState.getH_cost());
                 //System.out.println(nextState.getF_cost());
                 if (visited.contains(nextState)) {
                     continue;
@@ -71,8 +84,9 @@ public class Astar {
         System.out.println("totalcost:" + totalCost);
 //        System.out.println("break");
 //        System.exit(0);
-        if (totalCost >= 10000) {
+        if (totalCost >= 100000) {
             pathToGoal.clear();
+
             return pathToGoal;
         } else {
             return pathToGoal;

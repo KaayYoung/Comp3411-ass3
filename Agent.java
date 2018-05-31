@@ -23,7 +23,7 @@ public class Agent {
     final static int INITIALCOORD = 200;
 
     private HashMap<Coordinate, Character> map;
-    private HashMap<String, Integer> backpack;
+    private static HashMap<String, Integer> backpack;
     private HashMap<Coordinate, Integer> explored;
 
     private LinkedList<Coordinate> ItemToTake;
@@ -49,14 +49,13 @@ public class Agent {
     private char currMove;
 
     private int num_stones;
-	private boolean comingBack;
-	private boolean goingToTreasure;
+	private boolean takeTreasure;
+	private boolean backHome;
 	private boolean goingToItem;
 	private boolean goingToTree;
 
 	private boolean goAround;
     private boolean expand_water;
-    private boolean onWater;
 
     Astar findPath;
 	
@@ -86,14 +85,13 @@ public class Agent {
         currMove = '%';
         num_stones = 0;
 
-        comingBack = false;
-        goingToTreasure = false;
+        takeTreasure = false;
+        backHome = false;
         goingToItem = false;
         goingToTree = false;
 
         goAround = false;
         expand_water = false;
-        onWater = false;
 
         findPath = new Astar();
     }
@@ -349,8 +347,13 @@ public class Agent {
             backpack.put("Raft", 1);
             map.put(next_coord, ' ');
         } else if (map.get(next_coord) == '~' && backpack.get("Stones") > 0) {
-            backpack.put("Stones", num_stones - 1);
+        	// System.exit(0);
+        	num_stones--;
+            backpack.put("Stones", num_stones);
+            System.out.println("Stones:....................." + backpack.get("Stones"));
             map.put(next_coord, 'O');
+        } else if (map.get(curr_coord) == '~' && map.get(next_coord) == ' ' && backpack.get("Stones") == 0) {
+        	backpack.put("Raft", 0);
         }
         list_moves.add('f');
         tempDirection = newDirection;
@@ -379,9 +382,10 @@ public class Agent {
     	    next_step = 'l';
         }
 
-        if (explored.get(curr_location) > 2) {
+        if (explored.get(curr_location) > 3) {
     	    goAround = false;
-            if (backpack.get("Raft") == 1 || onWater == true) {
+            if (backpack.get("Raft") == 1) {
+            	System.out.println("expand_water:true");
                 expand_water = true;
             }
         }
@@ -403,40 +407,56 @@ public class Agent {
         updateMap(view);
 
         // Find the path to treasure
-        if (TreasureCoord.getX() != 200 && moves_to_treasure.isEmpty() && !goingToTreasure) {
+        if (TreasureCoord.getX() != 200 && !takeTreasure){ // && !goingToTreasure) {
         	System.out.println("On the way to Treasure");
             int initialH = abs(curr_location.getX() - TreasureCoord.getX()) + abs(curr_location.getY() - TreasureCoord.getY());
             State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
-            toTreasure = findPath.aStarSearch(curr_state, TreasureCoord, map, backpack);
+            toTreasure = findPath.aStarSearch(curr_state, TreasureCoord, map, backpack, expand_water);
             
             if (!toTreasure.isEmpty()) moves_to_treasure = stateToMove(toTreasure);
+            if (!moves_to_treasure.isEmpty()) takeTreasure = true; 
         }
 
         // make moves to treasure
-        if (!moves_to_treasure.isEmpty()) {
-        	goingToTreasure = true;
-        	currMove = moves_to_treasure.poll();
+        // if (!moves_to_treasure.isEmpty()) {
+        // 	goingToTreasure = true;
+        // 	currMove = moves_to_treasure.poll();
 
-            return currMove;
-        }
+        //     return currMove;
+        // }
         
         // Find the path to come back
-        if (backpack.get("Treasure") == 1 && !comingBack) {
+        if (TreasureCoord.getX() != 200 && takeTreasure){ //&& !comingBack) {
         	System.out.println("Back to starting point from treasure");
             int initialH = abs(curr_location.getX() - TreasureCoord.getX()) + abs(curr_location.getY() - TreasureCoord.getY());
             State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
             Coordinate start_point = new Coordinate(0,0);
-            if(start_point != null) toStart = findPath.aStarSearch(curr_state, start_point, map, backpack);
+            if(start_point != null) toStart = findPath.aStarSearch(curr_state, start_point, map, backpack, expand_water);
             if (!toStart.isEmpty()) moves_back_start = stateToMove(toStart);
+            if (!moves_back_start.isEmpty()) {
+            	backHome = true;
+            } else {
+            	takeTreasure = false;
+            }
+        } 
+
+        if (takeTreasure && backHome) {
+
+        	if(!moves_to_treasure.isEmpty()){
+        		currMove = moves_to_treasure.poll();
+        	} else {
+        		currMove = moves_back_start.poll();
+        	}
+        	return currMove;
         }
 
         // make moves to come back
-        if (!moves_back_start.isEmpty()) {
-        	comingBack = true;
-        	currMove = moves_back_start.poll();
-            return currMove;
-        }
-        if(time==50) System.exit(0);
+        // if (!moves_back_start.isEmpty()) {
+        // 	comingBack = true;
+        // 	currMove = moves_back_start.poll();
+        //     return currMove;
+        // }
+        if(time==90) System.exit(0);
         time++;
 
 
@@ -457,7 +477,7 @@ public class Agent {
             System.out.println("curr_Item:" + curr_Item.getX()+" "+curr_Item.getY());
             int initialH = abs(curr_location.getX() - curr_Item.getX()) + abs(curr_location.getY() - curr_Item.getY());
             State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
-            toItem = findPath.aStarSearch(curr_state, curr_Item, map, backpack);
+            toItem = findPath.aStarSearch(curr_state, curr_Item, map, backpack, expand_water);
             if (!toItem.isEmpty()) moves_to_item = stateToMove(toItem);
         }
 
@@ -499,7 +519,7 @@ public class Agent {
             System.out.println("curr_tree:" + curr_tree.getX()+" "+curr_tree.getY());
 
             State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
-            toTree = findPath.aStarSearch(curr_state, curr_tree, map, backpack);
+            toTree = findPath.aStarSearch(curr_state, curr_tree, map, backpack, expand_water);
             if (!toTree.isEmpty()) moves_to_tree = stateToMove(toTree);
         }
 
@@ -526,10 +546,10 @@ public class Agent {
 
 
         // TODO: keep expanding map
-        // expandMap(view);
-        // currMove = expand_map_steps.poll();
+        expandMap(view);
+        currMove = expand_map_steps.poll();
 
-        return currMove = 'z';
+        return currMove;
     }
 
 
@@ -599,6 +619,8 @@ public class Agent {
                 action = agent.get_action( view );
                 System.out.println(action);
                 out.write( action );
+                System.out.println("Stones:" + backpack.get("Stones"));
+                System.out.println("Raft:" + backpack.get("Raft"));
               }
             }
             catch( IOException e ) {
