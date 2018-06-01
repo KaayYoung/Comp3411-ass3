@@ -120,7 +120,7 @@ public class Agent {
         if (map.get(curr_location) == '$') {
             // TreasureCoord.setX(INITIALCOORD);
             // TreasureCoord.setY(INITIALCOORD);
-            found = true;
+//            found = true;
             map.put(curr_location, ' ');
             backpack.put("Treasure", 1);
         } else if (map.get(curr_location) == 'k') {
@@ -209,6 +209,7 @@ public class Agent {
         }
         if (item == '$') {
             TreasureCoord = coord;
+            found = true;
         }
         if (item == 'T') {
         	if (!TreeToCut.contains(coord)) TreeToCut.add(coord);
@@ -433,9 +434,9 @@ public class Agent {
         updateMap(view);
 
         // Find the path to treasure
-        // if(TreasureCoord.getX() != INITIALCOORD) System.out.println("in");
-        // if(found) System.out.println("found");
-        // if(!takeTreasure) System.out.println("take");
+         if(TreasureCoord.getX() != INITIALCOORD) System.out.println("in");
+         if(found) System.out.println("found");
+         if(!takeTreasure) System.out.println("take");
         if (TreasureCoord.getX() != INITIALCOORD && found && !calculatedTre){ // && !goingToTreasure) {
         	System.out.println("On the way to Treasure");
             // int initialH = abs(curr_location.getX() - TreasureCoord.getX()) + abs(curr_location.getY() - TreasureCoord.getY());
@@ -493,8 +494,8 @@ public class Agent {
         // 	currMove = moves_back_start.poll();
         //     return currMove;
         // }
-        if(time==260) System.exit(0);
-        time++;
+//        if(time==260) System.exit(0);
+//        time++;
 
 
 

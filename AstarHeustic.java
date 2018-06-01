@@ -18,7 +18,7 @@ public class AstarHeustic implements Heuristic{
             heuristic = 100000;
         } else if (map.get(curr_point) == '-' && backpack.get("Key") == 0) {
             heuristic = 100000;
-        } else if (map.get(curr_point) == '~' && curr_state.getNumOfStones() == 0 && curr_state.isHave_raft() == 0) {
+        } else if (map.get(curr_point) == '~' && curr_state.getNumOfStones() == 0 && curr_state.getIsHave_raft() == 0) {
             heuristic = 100000;
         } else if (map.get(curr_point) == '~' && curr_state.getNumOfStones() > 0) {
             heuristic = 1000;

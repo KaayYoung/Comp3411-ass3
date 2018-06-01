@@ -34,16 +34,16 @@ public class Astar {
                 //System.out.println("possible:" + possible.getX() + " " + possible.getY() + "curr_state:" + curr_state.getCurr_coord().getX() + curr_state.getCurr_coord().getY());
                 //System.out.println("keeeeeeeey:" + backpack.get("Key"));
                 
-                State nextState = new State(possible, curr_state.getG_cost() + 1, 0, curr_state.getNumOfStones(), curr_state.isHave_raft(), curr_state);
+                State nextState = new State(possible, curr_state.getG_cost() + 1, 0, curr_state.getNumOfStones(), curr_state.getIsHave_raft(), curr_state);
                 
 
-                // if (map.get(curr_state.getCurr_coord()) == '~' && map.get(possible) != '~') {
-                //     nextState.setHave_raft(0);
-                // }
+                if (map.get(curr_state.getCurr_coord()) == '~' && map.get(possible) != '~') {
+                    nextState.setIsHave_raft(0);;
+                }
 
                 int hCost = h.calculateHeuristic(nextState, goal, map, backpack, expand_water);
                 nextState.setH_cost(hCost);
-                if (map.get(curr_state.getCurr_coord()) == '~' && hCost < 100000) {
+                if (map.get(curr_state.getCurr_coord()) == '~' && hCost < 100000 && curr_state.getNumOfStones() > 0) {
                     curr_state.setNumOfStones(curr_state.getNumOfStones() - 1);
                 } 
                 
@@ -67,17 +67,23 @@ public class Astar {
         LinkedList<State> pathToGoal = new LinkedList<>();
         int totalCost = 0;
         pathToGoal.add(curr_state);
+        int i = 0;
         while (curr_state.getPre_state() != null) {
             // System.out.println("{");
             // System.out.println(curr_state.getPre_state().getCurr_coord().getX()+" "+curr_state.getPre_state().getCurr_coord().getY());
             // System.out.println("}");
+        	System.out.println(i+":");
             totalCost = totalCost + curr_state.getPre_state().getF_cost();
             System.out.println("Pre_fcost:" + curr_state.getPre_state().getF_cost());
+            System.out.println("has Raft:" + curr_state.getPre_state().getIsHave_raft());
+            System.out.println("stones:" + curr_state.getPre_state().getNumOfStones());
+            System.out.println("coordinate" + curr_state.getPre_state().getCurr_coord().getX()+" "+curr_state.getPre_state().getCurr_coord().getY());
             System.out.println("Pre_hcost:" + curr_state.getPre_state().getH_cost());
             System.out.println("totalcost:" + totalCost);
             pathToGoal.add(curr_state.getPre_state());
             curr_state = curr_state.getPre_state();
             // if(curr_state == null) System.out.println("1");
+            i++;
             // if(curr_state.getPre_state() == null) System.out.println("2");
             
         }
