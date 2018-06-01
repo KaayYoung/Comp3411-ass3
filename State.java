@@ -64,17 +64,15 @@ public class State implements Comparable<State> {
         this.numOfStones = numOfStones;
     }
 
-   
+    public int isHave_raft() {
+        return isHave_raft;
+    }
 
-    public int getIsHave_raft() {
-		return isHave_raft;
-	}
+    public void setHave_raft(int have_raft) {
+        isHave_raft = have_raft;
+    }
 
-	public void setIsHave_raft(int isHave_raft) {
-		this.isHave_raft = isHave_raft;
-	}
-
-	public State getPre_state() {
+    public State getPre_state() {
         return pre_state;
     }
 

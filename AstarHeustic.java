@@ -13,32 +13,26 @@ public class AstarHeustic implements Heuristic{
         int heuristic = abs(curr_point.getX() - goal.getX()) + abs(curr_point.getY() - goal.getY());
 
         if (map.get(curr_point) == '.') {
+            //System.out.println("111111111111111");
             heuristic = 100000;
         } else if (map.get(curr_point) == 'T' && backpack.get("Axe") == 0) {
+            //System.out.println("222222222222222");
             heuristic = 100000;
         } else if (map.get(curr_point) == '-' && backpack.get("Key") == 0) {
+            //System.out.println("33333333333333");
             heuristic = 100000;
-        } else if (map.get(curr_point) == '~' && curr_state.getNumOfStones() == 0 && curr_state.getIsHave_raft() == 0) {
-            heuristic = 100000;
-        } else if (map.get(curr_point) == '~' && curr_state.getNumOfStones() > 0) {
+        } else if (map.get(curr_point) == '~' && curr_state.getNumOfStones() > 0 ) {
+            //System.out.println("6666666666666");
             heuristic = 1000;
-        } else if (map.get(curr_point) == '*'){
+            //curr_state.setNumOfStones(curr_state.getNumOfStones() - 1);
+        } else if (map.get(curr_point) == '~' && curr_state.getNumOfStones() == 0 && curr_state.isHave_raft() == 0) {
+
+            //System.out.println("5555555555555555");
             heuristic = 100000;
-        }
-
-        // if(water_round < 2){
-
-        //     if(map.get(curr_point) == ' ' && map.get(curr_point) == 'O'){
-        //         heuristic = 100000;
-        //     }
-        // } else{
-        //     // heuristic return back to normal
-        //     // find a path to the treasure and return back to start
-        //     // find a path to item
-        //     // find a path to tree
-        // }
-
-        // A
+        }  else if (map.get(curr_point) == '*'){
+            //System.out.println("7777777777777");
+            heuristic = 100000;
+        } 
 
         return heuristic;
     }
