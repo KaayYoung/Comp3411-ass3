@@ -39,6 +39,7 @@ public class Agent {
     private LinkedList<Character> moves_to_tree;
     private LinkedList<Character> expand_map_steps;
     private LinkedList<Coordinate> cornerList;
+    private LinkedList<Coordinate> cornerExpand;
 
     private Coordinate TreasureCoord;
     private static Coordinate curr_location;
@@ -84,6 +85,7 @@ public class Agent {
         expand_map_steps = new LinkedList<>();
         cornerList = new LinkedList<>();
         moves_to_corner = new LinkedList<>();
+        cornerExpand = new LinkedList<>();
 
         TreasureCoord = new Coordinate(INITIALCOORD, INITIALCOORD);
         curr_location = new Coordinate(0, 0);
@@ -158,9 +160,7 @@ public class Agent {
         backpack.put("Treasure",0);
         backpack.put("Axe",0);
         cornerList.add(new Coordinate(0,0));
-//        cornerList.add(new Coordinate(0,4));
-//        cornerList.add(new Coordinate(4,0));
-//        cornerList.add(new Coordinate(4,4));
+
         int x = -2;
         for (int col = 0; col < 5; col++) {
             int y = 2;
@@ -297,9 +297,9 @@ public class Agent {
 
 
         State curr_state = list_of_states.pollLast();
-        System.out.println("before:"+tempDirection);
+        // System.out.println("before:"+tempDirection);
         tempDirection = direction;
-        System.out.println("after:"+tempDirection);
+        // System.out.println("after:"+tempDirection);
         
         while (!list_of_states.isEmpty()) {
             listOfMoves = moveDecision(curr_state.getCurr_coord(), list_of_states.peekLast().getCurr_coord());
@@ -343,6 +343,7 @@ public class Agent {
         System.out.println("+++++++++++++++");
         int newDirection = newDireciont;
         System.out.println("temp:"+tempDirection);
+        System.out.println("nD:"+newDireciont);
         if (tempDirection - newDireciont < 0) {
             if (tempDirection - newDireciont == -3) {
                 list_moves.add('r');
@@ -421,7 +422,7 @@ public class Agent {
 
     private boolean checkObstacle(char cell) {
         if (cell == 'T' || cell == '-' || cell == '*' || cell == '~' || cell == '.') {
-            if (cell == '~' && expand_water == true) return false;
+//            if (cell == '~' && expand_water == true) return false;
             return true;
         }
         return false;
@@ -465,7 +466,10 @@ public class Agent {
             	System.out.println("back coord:"+toStart.get(i).getCurr_coord().getX()+" "+toStart.get(i).getCurr_coord().getY());
             }
             if (!toStart.isEmpty()) {
-                
+//                System.out.println(direction);
+//                System.out.println(tempDirection);
+                direction = tempDirection;
+//                System.exit(0);
                 moves_back_start = stateToMove(toStart);
             }
             if (!moves_back_start.isEmpty()) {
@@ -483,6 +487,8 @@ public class Agent {
         		currMove = moves_to_treasure.poll();
         	} else {
         		currMove = moves_back_start.poll();
+        		System.out.println("11111direction:"+direction);
+//        		System.exit(0);
         	}
         	return currMove;
         }
@@ -569,7 +575,7 @@ public class Agent {
 		// }
 
         // TODO: Cut tree
-        if (!TreeToCut.isEmpty() && !goingToTree && moves_to_tree.isEmpty()) {
+        if (!TreeToCut.isEmpty() && !goingToTree && moves_to_tree.isEmpty() && backpack.get("Axe") == 1) {
         	
             Coordinate curr_tree = TreeToCut.poll();
             int initialH = abs(curr_location.getX() - curr_tree.getX()) + abs(curr_location.getY() - curr_tree.getY());
@@ -617,8 +623,9 @@ public class Agent {
         	} else {
         		System.out.println("Not Empty");
         	}
-        	System.out.println("coord:"+cornerList.peek().getX()+" "+cornerList.peek().getY());
+        	// System.out.println("coord:"+cornerList.peek().getX()+" "+cornerList.peek().getY());
         	currMove = moves_to_corner.poll();
+            System.out.println("going to explore:"+cornerList.peek().getX()+" "+cornerList.peek().getY());
         }
 
 
@@ -627,26 +634,78 @@ public class Agent {
     
     public void exploreMap(char[][] view) {
     	
-    	
-    	
     	if(cornerList.contains(curr_location)) {
-        	Coordinate left_top = new Coordinate(curr_location.getX() - 2, curr_location.getY() + 2);
-        	if(!cornerList.contains(left_top) && map.get(left_top) != '~') {
-        		cornerList.add(left_top);
-        	}
-        	Coordinate right_top = new Coordinate(curr_location.getX() + 2, curr_location.getY() + 2);
-        	if(!cornerList.contains(right_top) && map.get(right_top) != '~') {
-        		cornerList.add(right_top);
-        	}
-        	Coordinate right_bot = new Coordinate(curr_location.getX() + 2, curr_location.getY() - 2);
-        	if(!cornerList.contains(right_bot) && map.get(right_bot) != '~') {
-        		cornerList.add(right_bot);
-        	}
+            for(int i = 0; i < 2; i++){
+                boolean break_flag = false;
+                for(int j = 0; j < 3; j++){
+                    Coordinate left_top = new Coordinate(curr_location.getX() - 2 + j, curr_location.getY() + 2 - i);
+                    if(!cornerExpand.contains(left_top) && !cornerList.contains(left_top) && !checkObstacle(map.get(left_top))){
+                        cornerList.add(left_top);
+                        break_flag = true;
+                        break;
+                    }
+                }
+                if(break_flag) break;
+            }
+            for(int i = 0; i < 2; i++){
+                boolean break_flag = false;
+                for(int j = 0; j < 3; j++){
+                    Coordinate right_top = new Coordinate(curr_location.getX() + 2 - i, curr_location.getY() + 2 - j);
+                    if(!cornerExpand.contains(right_top) && !cornerList.contains(right_top) && !checkObstacle(map.get(right_top))){
+                        cornerList.add(right_top);
+                        break_flag = true;
+                        break;
+                    }
+                }
+                if(break_flag) break;
+            }
+
+            for(int i = 0; i < 2; i++){
+                boolean break_flag = false;
+                for(int j = 0; j < 3; j++){
+                    Coordinate right_bot = new Coordinate(curr_location.getX() + 2 - j, curr_location.getY() - 2 + i);
+                    if(!cornerExpand.contains(right_bot) && !cornerList.contains(right_bot) && !checkObstacle(map.get(right_bot))){
+                        cornerList.add(right_bot);
+                        break_flag = true;
+                        break;
+                    }
+                }
+                if(break_flag) break;
+            }
+
+            for(int i = 0; i < 2; i++){
+                boolean break_flag = false;
+                for(int j = 0; j < 3; j++){
+                    Coordinate left_bot = new Coordinate(curr_location.getX() - 2 + i, curr_location.getY() - 2 + j);
+                    if(!cornerExpand.contains(left_bot) && !cornerList.contains(left_bot) && !checkObstacle(map.get(left_bot))){
+                        cornerList.add(left_bot);
+                        break_flag = true;
+                        break;
+                    }
+                }
+                if(break_flag) break;
+            }
+
+
+        	// Coordinate left_top = new Coordinate(curr_location.getX() - 2, curr_location.getY() + 2);
+        	// if(!cornerList.contains(left_top) && !checkObstacle(map.get(left_top))) {
+        	// 	cornerList.add(left_top);
+        	// } else {
+
+        	// }
+        	// Coordinate right_top = new Coordinate(curr_location.getX() + 2, curr_location.getY() + 2);
+        	// if(!cornerList.contains(right_top) && !checkObstacle(map.get(right_top))) {
+        	// 	cornerList.add(right_top);
+        	// }
+        	// Coordinate right_bot = new Coordinate(curr_location.getX() + 2, curr_location.getY() - 2);
+        	// if(!cornerList.contains(right_bot) && !checkObstacle(map.get(right_bot))) {
+        	// 	cornerList.add(right_bot);
+        	// }
         	
-        	Coordinate left_bot = new Coordinate(curr_location.getX() - 2, curr_location.getY() - 2);
-        	if(!cornerList.contains(left_bot) && map.get(left_bot) != '~') {
-        		cornerList.add(left_bot);
-        	}
+        	// Coordinate left_bot = new Coordinate(curr_location.getX() - 2, curr_location.getY() - 2);
+        	// if(!cornerList.contains(left_bot) && !checkObstacle(map.get(left_bot))) {
+        	// 	cornerList.add(left_bot);
+        	// }
         }
     	
     	for(int i = 0; i < cornerList.size(); i++) {
@@ -658,7 +717,8 @@ public class Agent {
     	
     	for(int i = 0; i < cornerList.size(); i++) {
     		if(cornerList.get(i).equals(curr_location)) {
-    			cornerList.remove(i);
+    			cornerExpand.add(cornerList.get(i));
+                cornerList.remove(i);
     		}
     	}
     	
