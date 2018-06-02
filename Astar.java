@@ -10,7 +10,7 @@ public class Astar {
         this.h = new AstarHeustic();
     }
 
-    public LinkedList<State> aStarSearch(State start_state, Coordinate goal, HashMap<Coordinate, Character> map, HashMap<String, Integer> backpack, boolean expand_water) {
+    public LinkedList<State> aStarSearch(State start_state, Coordinate goal, HashMap<Coordinate, Character> map, HashMap<String, Integer> backpack, boolean onWater) {
 
         LinkedList<State> pathToGoal = new LinkedList<>();
         PriorityQueue<State> toVisit = new PriorityQueue<>();
@@ -45,7 +45,7 @@ public class Astar {
                 if (map.get(curr_state.getCurr_coord()) == '~' && curr_state.getNumOfStones() > 0) {
                     nextState.setNumOfStones(nextState.getNumOfStones() - 1);
                 } 
-                int hCost = h.calculateHeuristic(nextState, goal, map, backpack, expand_water);
+                int hCost = h.calculateHeuristic(nextState, goal, map, backpack, onWater);
                 nextState.setH_cost(hCost);
 
                 
@@ -74,17 +74,17 @@ public class Astar {
             // System.out.println(curr_state.getPre_state().getCurr_coord().getX()+" "+curr_state.getPre_state().getCurr_coord().getY());
             // System.out.println("}");
             totalCost = totalCost + curr_state.getPre_state().getF_cost();
-            //System.out.println("Pre_fcost:" + curr_state.getPre_state().getF_cost());
-            //System.out.println("Pre_hcost:" + curr_state.getPre_state().getH_cost());
-            //System.out.println("curr_state:" + curr_state.getCurr_coord().getX()+" "+curr_state.getCurr_coord().getY());
-            System.out.println("totalcost:" + totalCost);
+            System.out.println("Pre_fcost:" + curr_state.getPre_state().getF_cost());
+            System.out.println("Pre_hcost:" + curr_state.getPre_state().getH_cost());
+            System.out.println("curr_state:" + curr_state.getCurr_coord().getX()+" "+curr_state.getCurr_coord().getY());
+            //System.out.println("totalcost:" + totalCost);
             pathToGoal.add(curr_state.getPre_state());
             curr_state = curr_state.getPre_state();
             // if(curr_state == null) System.out.println("1");
             // if(curr_state.getPre_state() == null) System.out.println("2");
             
         }
-        System.out.println("totalcost:" + totalCost);
+        //System.out.println("totalcost:" + totalCost);
 //        System.out.println("break");
 //        System.exit(0);
         if (totalCost >= 100000) {

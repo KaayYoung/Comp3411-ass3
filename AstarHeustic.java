@@ -7,7 +7,7 @@ public class AstarHeustic implements Heuristic{
     // TODO: when use stone and raft, need to decrease the number of stones and raft
 
     @Override
-    public int calculateHeuristic(State curr_state, Coordinate goal, HashMap<Coordinate, Character> map, HashMap<String, Integer> backpack, boolean expand_water) {
+    public int calculateHeuristic(State curr_state, Coordinate goal, HashMap<Coordinate, Character> map, HashMap<String, Integer> backpack, boolean onWater) {
         Coordinate curr_point = curr_state.getCurr_coord();
 
         int heuristic = abs(curr_point.getX() - goal.getX()) + abs(curr_point.getY() - goal.getY());
@@ -33,6 +33,10 @@ public class AstarHeustic implements Heuristic{
             //System.out.println("7777777777777");
             heuristic = 100000;
         } 
+
+        if (onWater && map.get(curr_point) != '~') {
+            heuristic = 100000;
+        }
 
         return heuristic;
     }
