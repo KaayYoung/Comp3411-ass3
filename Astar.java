@@ -42,11 +42,14 @@ public class Astar {
                     System.out.println("No  raft  .........!!!!");
                     nextState.setHave_raft(0);
                 }
+
                 if (map.get(curr_state.getCurr_coord()) == '~' && curr_state.getNumOfStones() > 0) {
                     nextState.setNumOfStones(nextState.getNumOfStones() - 1);
                 } 
+
                 int hCost = h.calculateHeuristic(nextState, goal, map, backpack, onWater);
                 nextState.setH_cost(hCost);
+
 
                 
                 nextState.setF_cost(nextState.getG_cost() + nextState.getH_cost());
@@ -74,9 +77,9 @@ public class Astar {
             // System.out.println(curr_state.getPre_state().getCurr_coord().getX()+" "+curr_state.getPre_state().getCurr_coord().getY());
             // System.out.println("}");
             totalCost = totalCost + curr_state.getPre_state().getF_cost();
-            System.out.println("Pre_fcost:" + curr_state.getPre_state().getF_cost());
-            System.out.println("Pre_hcost:" + curr_state.getPre_state().getH_cost());
-            System.out.println("curr_state:" + curr_state.getCurr_coord().getX()+" "+curr_state.getCurr_coord().getY());
+            // System.out.println("Pre_fcost:" + curr_state.getPre_state().getF_cost());
+            // System.out.println("Pre_hcost:" + curr_state.getPre_state().getH_cost());
+            // System.out.println("curr_state:" + curr_state.getCurr_coord().getX()+" "+curr_state.getCurr_coord().getY());
             //System.out.println("totalcost:" + totalCost);
             pathToGoal.add(curr_state.getPre_state());
             curr_state = curr_state.getPre_state();

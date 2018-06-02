@@ -22,12 +22,12 @@ public class AstarHeustic implements Heuristic{
             //System.out.println("33333333333333");
             heuristic = 100000;
         } else if (map.get(curr_point) == '~' && curr_state.getNumOfStones() > 0 ) {
-            //System.out.println("6666666666666");
+            System.out.println("6666666666666");
             heuristic = 1000;
             //curr_state.setNumOfStones(curr_state.getNumOfStones() - 1);
         } else if (map.get(curr_point) == '~' && curr_state.getNumOfStones() == 0 && curr_state.isHave_raft() == 0) {
 
-            //System.out.println("5555555555555555");
+            System.out.println("5555555555555555");
             heuristic = 100000;
         }  else if (map.get(curr_point) == '*'){
             //System.out.println("7777777777777");
@@ -35,8 +35,9 @@ public class AstarHeustic implements Heuristic{
         } 
 
         if (onWater && map.get(curr_point) != '~') {
+            System.out.println("888888888");
             heuristic = 100000;
-        }
+        } 
 
         return heuristic;
     }

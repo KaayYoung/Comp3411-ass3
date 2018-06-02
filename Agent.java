@@ -43,6 +43,7 @@ public class Agent {
     private LinkedList<State> todropwater;
     private LinkedList<Character> moves_to_water;
 
+    private Coordinate last_location;
     private Coordinate dropwater;
     private Coordinate TreasureCoord;
     private static Coordinate curr_location;
@@ -63,7 +64,8 @@ public class Agent {
 	private boolean goingToTree;
     private boolean suc;
     private boolean onWater;
-
+    private boolean standingOnWater;
+    private boolean canbetrue;
 	private boolean goAround;
 
     Astar findPath;
@@ -92,6 +94,7 @@ public class Agent {
         todropwater = new LinkedList<>();
         moves_to_water = new LinkedList<>();
 
+        last_location = new Coordinate(0, 0);
         dropwater = new Coordinate(INITIALCOORD, INITIALCOORD);
         TreasureCoord = new Coordinate(INITIALCOORD, INITIALCOORD);
         curr_location = new Coordinate(0, 0);
@@ -110,7 +113,8 @@ public class Agent {
         goAround = false;
         
         onWater = false;
-
+        standingOnWater = false;
+        canbetrue = false;
         findPath = new Astar();
     }
 
@@ -150,8 +154,12 @@ public class Agent {
             goingToItem = false;
             ItemToTake.remove(curr_location);
             backpack.put("Stones", backpack.get("Stones") + 1);
-        } else if (map.get(curr_location) == '~' && backpack.get("Stones") == 0) {
+            System.out.println("Stones added:"+backpack.get("Stones"));
+        } else if (map.get(curr_location) != '~' && map.get(last_location) == '~' && backpack.get("Stones") == 0) {
             backpack.put("Raft", 0);
+            standingOnWater = false;
+        } else if (map.get(curr_location) == '~' && backpack.get("Stones") == 0 && backpack.get("Raft") == 1) {
+            standingOnWater = true;
         }
         
     }
@@ -231,6 +239,8 @@ public class Agent {
 
     public void MoveForward(char view[][]) {
 
+        last_location.setX(curr_location.getX());
+        last_location.setY(curr_location.getY());
         explored.put(curr_location, explored.get(curr_location) +  1);
         System.out.println("curr_move in moveforward:" + currMove);
         if (direction == EAST) {
@@ -336,7 +346,8 @@ public class Agent {
             lastMove = '%';
         }
 
-        if (curr_location.equals(dropwater)) {
+        if (curr_location.equals(dropwater) && !canbetrue) {
+            canbetrue = true;
             onWater = true;
             cornerList.clear();
             cornerList.add(dropwater);
@@ -489,7 +500,7 @@ public class Agent {
 
         updateMap(view);
 
-        System.out.println("Treasure:" + TreasureCoord.getX());
+        System.out.println("Treasure:" + TreasureCoord.getX() );
         if (takeTreasure) {
             System.out.println("takeTreasure ==== true");
         }
@@ -497,17 +508,30 @@ public class Agent {
         if (TreasureCoord.getX() != 200 && !takeTreasure){ // && !goingToTreasure) {
         	System.out.println("On the way to Treasure");
             // int initialH = abs(curr_location.getX() - TreasureCoord.getX()) + abs(curr_location.getY() - TreasureCoord.getY());
-            State curr_state = new State(curr_location, 0, 0, backpack.get("Stones"), backpack.get("Raft"), null);
-            System.out.println("curr_state_stone: " + curr_state.getNumOfStones() + "  raft: " + curr_state.isHave_raft());
-            toTreasure = findPath.aStarSearch(curr_state, TreasureCoord, map, backpack, onWater);
             
+            State curr_state = new State(curr_location, 0, 0, backpack.get("Stones"), -1, null);
+            if (backpack.get("Raft") == 1) {
+                curr_state.setHave_raft(1);
+            } else {
+                curr_state.setHave_raft(0);
+            }
+            System.out.println("curr_state_stone1: " + curr_state.getNumOfStones() + "  raft: " + curr_state.isHave_raft());
+            toTreasure = findPath.aStarSearch(curr_state, TreasureCoord, map, backpack, onWater);
+            System.out.println("curr_state_stone2: " + curr_state.getNumOfStones() + "  raft: " + curr_state.isHave_raft());
+            if(backpack.get("Stones") == 3) System.exit(0);
             if (!toTreasure.isEmpty()) moves_to_treasure = stateToMove(toTreasure);
-            if (!moves_to_treasure.isEmpty()) takeTreasure = true; 
+            if (!moves_to_treasure.isEmpty()) {
+                if (standingOnWater) {
+                    backpack.put("Raft", 0);
+                }
+                takeTreasure = true; 
+            } 
         }
         if (takeTreasure) {
         	System.out.println("takeTreasure: true");
 
         }
+
         
         // Find the path to come back
         if (!suc && takeTreasure){ //&& !comingBack) {
@@ -515,7 +539,10 @@ public class Agent {
             // int initialH = abs(curr_location.getX() - TreasureCoord.getX()) + abs(curr_location.getY() - TreasureCoord.getY());
             State curr_state = new State(TreasureCoord, 0, 0, backpack.get("Stones"), backpack.get("Raft"), null);
             Coordinate start_point = new Coordinate(0,0);
+            System.out.println("curr_state_stone_inBack1: " + curr_state.getNumOfStones() + "  raft: " + curr_state.isHave_raft());
             toStart = findPath.aStarSearch(curr_state, start_point, map, backpack, onWater);
+
+            System.out.println("curr_state_stone_inBack2: " + curr_state.getNumOfStones() + "  raft: " + curr_state.isHave_raft());
             for(int i = 0; i < toStart.size(); i++) {
             	System.out.println("back coord:"+toStart.get(i).getCurr_coord().getX()+" "+toStart.get(i).getCurr_coord().getY());
             }
@@ -525,10 +552,14 @@ public class Agent {
                 direction = tempDirection;
 //                System.exit(0);
                 moves_back_start = stateToMove(toStart);
-            }
+            } 
             if (!moves_back_start.isEmpty()) {
             	backHome = true;
             } else {
+                if (standingOnWater) {
+                    backpack.put("Raft", 1);
+                }
+                
             	takeTreasure = false;
             }
         } 
@@ -653,10 +684,11 @@ public class Agent {
         if (!takeTreasure && !backHome) {
 //        	expandMap(view);
 //        	currMove = expand_map_steps.poll();
+            exploreMap(view);
         	if(moves_to_corner.isEmpty()) {
         		System.out.println("Empty");
         		
-        		exploreMap(view);
+        		
         		for(int i = 0; i < cornerList.size(); i++) {
         			System.out.println("Coord:"+cornerList.get(i).getX()+" "+cornerList.get(i).getY());
         		}
@@ -673,7 +705,7 @@ public class Agent {
 
         
 
-        if (!takeTreasure && !backHome && moves_to_corner.isEmpty()) {
+        if (!takeTreasure && !backHome && moves_to_corner.isEmpty() && !onWater) {
             int initialH = abs(curr_location.getX() - dropwater.getX()) + abs(curr_location.getY() - dropwater.getY());
             State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
             todropwater = findPath.aStarSearch(curr_state, dropwater, map, backpack, onWater);
@@ -688,6 +720,9 @@ public class Agent {
             // System.exit(0);
         }
 
+        onWater = false;
+        backpack.put("Raft", 1);
+        // System.exit(0);
         return currMove = 'z';
     }
     
@@ -703,7 +738,7 @@ public class Agent {
                     Coordinate left_top = new Coordinate(curr_location.getX() - 2 + j, curr_location.getY() + 2 - i);
                     if(!cornerExpand.contains(left_top) && !cornerList.contains(left_top) && !checkObstacle(map.get(left_top), onWater)){
                         System.out.println("watttttter!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        cornerList.addLast(left_top);
+                        cornerList.add(left_top);
                         break_flag = true;
                         break;
                     }
@@ -719,7 +754,7 @@ public class Agent {
                     }
                     if(!cornerExpand.contains(right_top) && !cornerList.contains(right_top) && !checkObstacle(map.get(right_top), onWater)){
                         System.out.println("watttttter!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        cornerList.addLast(right_top);
+                        cornerList.add(right_top);
                         break_flag = true;
                         break;
                     }
@@ -735,7 +770,7 @@ public class Agent {
                     Coordinate right_bot = new Coordinate(curr_location.getX() + 2 - j, curr_location.getY() - 2 + i);
                     if(!cornerExpand.contains(right_bot) && !cornerList.contains(right_bot) && !checkObstacle(map.get(right_bot), onWater)){
                         System.out.println("watttttter!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        cornerList.addLast(right_bot);
+                        cornerList.add(right_bot);
                         break_flag = true;
                         break;
                     }
@@ -752,7 +787,7 @@ public class Agent {
                     }
                     if(!cornerExpand.contains(left_bot) && !cornerList.contains(left_bot) && !checkObstacle(map.get(left_bot), onWater)){
                         System.out.println("watttttter!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        cornerList.addLast(left_bot);
+                        cornerList.add(left_bot);
                         break_flag = true;
                         break;
                     }
@@ -760,26 +795,6 @@ public class Agent {
                 if(break_flag) break;
             }
 
-
-        	// Coordinate left_top = new Coordinate(curr_location.getX() - 2, curr_location.getY() + 2);
-        	// if(!cornerList.contains(left_top) && !checkObstacle(map.get(left_top))) {
-        	// 	cornerList.add(left_top);
-        	// } else {
-
-        	// }
-        	// Coordinate right_top = new Coordinate(curr_location.getX() + 2, curr_location.getY() + 2);
-        	// if(!cornerList.contains(right_top) && !checkObstacle(map.get(right_top))) {
-        	// 	cornerList.add(right_top);
-        	// }
-        	// Coordinate right_bot = new Coordinate(curr_location.getX() + 2, curr_location.getY() - 2);
-        	// if(!cornerList.contains(right_bot) && !checkObstacle(map.get(right_bot))) {
-        	// 	cornerList.add(right_bot);
-        	// }
-        	
-        	// Coordinate left_bot = new Coordinate(curr_location.getX() - 2, curr_location.getY() - 2);
-        	// if(!cornerList.contains(left_bot) && !checkObstacle(map.get(left_bot))) {
-        	// 	cornerList.add(left_bot);
-        	// }
         // } else {
         //     System.out.println("oooooooooooooooooooooooooooooooooooooooooooo");
         // }
@@ -794,16 +809,22 @@ public class Agent {
     		
             LinkedList<State> toCorner = findPath.aStarSearch(curr_state, cornerList.get(i), map, backpack, onWater);
             if(!toCorner.isEmpty()) moves_to_corner = stateToMove(toCorner);
-            if(!moves_to_corner.isEmpty()) break;
+            if(!moves_to_corner.isEmpty()) {
+
+                break;
+            }
     	}
     	
     	for(int i = 0; i < cornerList.size(); i++) {
             System.out.println("corner_cord:" + cornerList.get(i).getX() + " " + cornerList.get(i).getY());
             System.out.println("sadasdgaegs");
+
     		if(cornerList.get(i).equals(curr_location)) {
+                System.out.println("cornerList_size:" + cornerExpand.size());
                 System.out.println("add into cornerList:" + cornerList.get(i).getX() + " " + cornerList.get(i).getY());
     			cornerExpand.addLast(cornerList.get(i));
                 cornerList.remove(i);
+                break;
     		}
     	}
     	
