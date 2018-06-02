@@ -13,8 +13,8 @@ public class Astar {
     public LinkedList<State> aStarSearch(State start_state, Coordinate goal, HashMap<Coordinate, Character> map, HashMap<String, Integer> backpack, boolean onWater) {
 
         LinkedList<State> pathToGoal = new LinkedList<>();
-        PriorityQueue<State> toVisit = new PriorityQueue<>();
-        PriorityQueue<State> visited = new PriorityQueue<>();
+        PriorityQueue<State> toVisit = new PriorityQueue<State>();
+        ArrayList<State> visited = new ArrayList<State>();
 
         // TODO: implement state class
         toVisit.add(start_state);
@@ -25,7 +25,7 @@ public class Astar {
             // Get the path when we find the goal
             if (curr_state.getCurr_coord().equals(goal)) {
 
-                pathToGoal = traceBack(curr_state, start_state);
+                pathToGoal = traceBack(curr_state, start_state, backpack);
                 break;
             }
 
@@ -67,7 +67,7 @@ public class Astar {
         return pathToGoal;
     }
 
-    public LinkedList<State> traceBack(State curr_state, State start_state) {
+    public LinkedList<State> traceBack(State curr_state, State start_state, HashMap<String, Integer> backpack) {
 
         LinkedList<State> pathToGoal = new LinkedList<>();
         int totalCost = 0;
@@ -79,7 +79,7 @@ public class Astar {
             totalCost = totalCost + curr_state.getPre_state().getF_cost();
             // System.out.println("Pre_fcost:" + curr_state.getPre_state().getF_cost());
             // System.out.println("Pre_hcost:" + curr_state.getPre_state().getH_cost());
-            // System.out.println("curr_state:" + curr_state.getCurr_coord().getX()+" "+curr_state.getCurr_coord().getY());
+            System.out.println("curr_stateinTrace_back:" + curr_state.getCurr_coord().getX()+" "+curr_state.getCurr_coord().getY() + "crr_stones:" + curr_state.getNumOfStones() + "cur_heu:" + curr_state.getH_cost());
             //System.out.println("totalcost:" + totalCost);
             pathToGoal.add(curr_state.getPre_state());
             curr_state = curr_state.getPre_state();
@@ -92,7 +92,7 @@ public class Astar {
 //        System.exit(0);
         if (totalCost >= 100000) {
             pathToGoal.clear();
-
+            //start_state.setNumOfStones.put("Stones", start_state.getNumOfStones());
             return pathToGoal;
         } else {
             return pathToGoal;

@@ -42,7 +42,10 @@ public class Agent {
     private LinkedList<Coordinate> cornerExpand;
     private LinkedList<State> todropwater;
     private LinkedList<Character> moves_to_water;
+    private LinkedList<State> todoor;
+    private LinkedList<Character> moves_to_door;
 
+    private Coordinate door;
     private Coordinate last_location;
     private Coordinate dropwater;
     private Coordinate TreasureCoord;
@@ -93,7 +96,10 @@ public class Agent {
         cornerExpand = new LinkedList<>();
         todropwater = new LinkedList<>();
         moves_to_water = new LinkedList<>();
+        todoor = new LinkedList<>();
+        moves_to_door = new LinkedList<>();
 
+        door = new Coordinate(INITIALCOORD, INITIALCOORD);
         last_location = new Coordinate(0, 0);
         dropwater = new Coordinate(INITIALCOORD, INITIALCOORD);
         TreasureCoord = new Coordinate(INITIALCOORD, INITIALCOORD);
@@ -130,6 +136,7 @@ public class Agent {
         } else if (currMove == 'f') {
             MoveForward(view);
         } else if (lastMove == 'c') {
+
         	goingToTree = false;
         }
  
@@ -160,14 +167,11 @@ public class Agent {
             standingOnWater = false;
         } else if (map.get(curr_location) == '~' && backpack.get("Stones") == 0 && backpack.get("Raft") == 1) {
             standingOnWater = true;
-        }
+        } 
         
     }
 
-    
-    
-    
-    
+
     public void initializeMap (char view[][]) {
         backpack.put("Raft",0);
         backpack.put("Key",0);
@@ -200,6 +204,10 @@ public class Agent {
 
                     if (view[row][col] == 'T') {
                         TreeToCut.add(coord);
+                    }
+                    if (view[row][col] == '-') {
+                        door.setX(coord.getX());
+                        door.setY(coord.getY());
                     }
                 }
 
@@ -235,6 +243,10 @@ public class Agent {
         if (item == 'T') {
         	if (!TreeToCut.contains(coord)) TreeToCut.add(coord);
         }
+        if (item == '-') {
+            door.setX(coord.getX());
+            door.setY(coord.getY());
+        }
     }
 
     public void MoveForward(char view[][]) {
@@ -268,6 +280,18 @@ public class Agent {
                 dropwater.setX(curr_location.getX() + 1);
                 dropwater.setY(curr_location.getY());
             }
+
+            counter = 0;
+            for (int i = 0; i < 5; i++) {
+                if (view[i][3] == '~') {
+                    counter++;
+                }
+            } 
+            if (counter == 5) {
+                dropwater.setX(curr_location.getX());
+                dropwater.setY(curr_location.getY() - 1);
+            }
+
         } else if (direction == NORTH) {
             curr_location.setY(curr_location.getY() + 1);
             int expandPart = 0;
@@ -289,6 +313,17 @@ public class Agent {
                 dropwater.setX(curr_location.getX());
                 dropwater.setY(curr_location.getY() + 1);
             }
+
+            counter = 0;
+            for (int i = 0; i < 5; i++) {
+                if (view[i][3] == '~') {
+                    counter++;
+                }
+            } 
+            if (counter == 5) {
+                dropwater.setX(curr_location.getX() + 1);
+                dropwater.setY(curr_location.getY());
+            }
         } else if (direction == WEST) {
             curr_location.setX(curr_location.getX() - 1);
             int expandPart = 0;
@@ -309,6 +344,17 @@ public class Agent {
             if (counter == 5) {
                 dropwater.setX(curr_location.getX() - 1);
                 dropwater.setY(curr_location.getY());
+            }
+
+            counter = 0;
+            for (int i = 0; i < 5; i++) {
+                if (view[i][3] == '~') {
+                    counter++;
+                }
+            } 
+            if (counter == 5) {
+                dropwater.setX(curr_location.getX());
+                dropwater.setY(curr_location.getY() + 1);
             }
         } else if (direction == SOUTH) {
             curr_location.setY(curr_location.getY() - 1);
@@ -346,12 +392,20 @@ public class Agent {
             lastMove = '%';
         }
 
+
+
         if (curr_location.equals(dropwater) && !canbetrue) {
             canbetrue = true;
             onWater = true;
             cornerList.clear();
             cornerList.add(dropwater);
         } 
+
+        if (map.get(curr_location) == '~' && backpack.get("Stones") > 0){
+            backpack.put("Stones", backpack.get("Stones") - 1);
+            // System.out.println("Stones:....................." + backpack.get("Stones"));
+            map.put(curr_location, 'O');
+        }
 
     }
 
@@ -433,18 +487,19 @@ public class Agent {
         System.out.println("next_coord:" + next_coord.getX());
         if (map.get(next_coord) == '-' && backpack.get("Key") == 1) {
             list_moves.add('u');
+            door.setX(INITIALCOORD);
+            door.setY(INITIALCOORD);
             map.put(next_coord, ' ');
         } else if (map.get(next_coord) == 'T' && backpack.get("Axe") == 1) {
             list_moves.add('c');
-            backpack.put("Raft", 1);
-            map.put(next_coord, ' ');
-        } else if (map.get(next_coord) == '~' && backpack.get("Stones") > 0) {
-        	 //System.exit(0);
-        	
-            backpack.put("Stones", backpack.get("Stones") - 1);
-            System.out.println("Stones:....................." + backpack.get("Stones"));
-            map.put(next_coord, 'O');
         } 
+        // else if (map.get(next_coord) == '~' && backpack.get("Stones") > 0) {
+        // 	 //System.exit(0);
+        	
+        //     backpack.put("Stones", backpack.get("Stones") - 1);
+        //     System.out.println("Stones:....................." + backpack.get("Stones"));
+        //     map.put(next_coord, 'O');
+        // } 
         list_moves.add('f');
         tempDirection = newDirection;
         return list_moves;
@@ -500,6 +555,17 @@ public class Agent {
 
         updateMap(view);
 
+        if (door.getX() != INITIALCOORD && moves_to_door.isEmpty()) {
+            State curr_state = new State(curr_location, 0, 0, backpack.get("Stones"), backpack.get("Raft"), null);
+            todoor = findPath.aStarSearch(curr_state, door, map, backpack, onWater);
+            if (!todoor.isEmpty()) moves_to_door = stateToMove(todoor);
+        }
+        if (!moves_to_door.isEmpty()) {
+            currMove = moves_to_door.poll();
+
+            return currMove;
+        }
+
         System.out.println("Treasure:" + TreasureCoord.getX() );
         if (takeTreasure) {
             System.out.println("takeTreasure ==== true");
@@ -518,7 +584,7 @@ public class Agent {
             System.out.println("curr_state_stone1: " + curr_state.getNumOfStones() + "  raft: " + curr_state.isHave_raft());
             toTreasure = findPath.aStarSearch(curr_state, TreasureCoord, map, backpack, onWater);
             System.out.println("curr_state_stone2: " + curr_state.getNumOfStones() + "  raft: " + curr_state.isHave_raft());
-            if(backpack.get("Stones") == 3) System.exit(0);
+            //if(backpack.get("Stones") == 3) System.exit(0);
             if (!toTreasure.isEmpty()) moves_to_treasure = stateToMove(toTreasure);
             if (!moves_to_treasure.isEmpty()) {
                 if (standingOnWater) {
@@ -607,7 +673,7 @@ public class Agent {
             	int initialH = abs(curr_location.getX() - curr_Item.getX()) + abs(curr_location.getY() - curr_Item.getY());
             	State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
             	toItem = findPath.aStarSearch(curr_state, curr_Item, map, backpack, onWater);
-
+                if(!toItem.isEmpty()) break;
         	}
             if (!toItem.isEmpty()) {
             	moves_to_item = stateToMove(toItem);
@@ -648,13 +714,21 @@ public class Agent {
         // TODO: Cut tree
         if (!TreeToCut.isEmpty() && !goingToTree && moves_to_tree.isEmpty() && backpack.get("Axe") == 1 && !onWater) {
         	
-            Coordinate curr_tree = TreeToCut.poll();
-            int initialH = abs(curr_location.getX() - curr_tree.getX()) + abs(curr_location.getY() - curr_tree.getY());
-            System.out.println("curr_tree:" + curr_tree.getX()+" "+curr_tree.getY());
+            for (int i = 0; i < TreeToCut.size(); i++) {
+                Coordinate curr_tree = TreeToCut.get(i);
+                int initialH = abs(curr_location.getX() - curr_tree.getX()) + abs(curr_location.getY() - curr_tree.getY());
+                // if (onWater) {
+                //     System.out.println("ooonnnnn wattter");
+                // }
+                System.out.println("curr_tree:" + curr_tree.getX()+" "+curr_tree.getY());
+                State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
+                toTree = findPath.aStarSearch(curr_state, curr_tree, map, backpack, onWater);
+                if (!toTree.isEmpty()) {
+                    moves_to_tree = stateToMove(toTree);
+                    break;
+                }
+            }
 
-            State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
-            toTree = findPath.aStarSearch(curr_state, curr_tree, map, backpack, onWater);
-            if (!toTree.isEmpty()) moves_to_tree = stateToMove(toTree);
         }
 
         if (!moves_to_tree.isEmpty()) {
@@ -722,7 +796,7 @@ public class Agent {
 
         onWater = false;
         backpack.put("Raft", 1);
-        // System.exit(0);
+        //System.exit(0);
         return currMove = 'z';
     }
     
