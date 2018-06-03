@@ -1,7 +1,7 @@
 /**
  * This class stores the coordinate
  * @author Yaoyang Cai, z5092306
- *
+ * @author jingshi Yang z5110579
  */
 public class Coordinate {
 	

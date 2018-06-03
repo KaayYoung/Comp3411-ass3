@@ -5,6 +5,38 @@
  *  UNSW Session 1, 2018
 */
 
+/**
+  * @author Yaoyang Cai, z5092306
+  * @author Jingshi Yang z5110579
+  */
+
+/**
+  * 1.In our program, we have 2 HashMap, and a bunch of linkedLists
+  * The two HashMap are map and backpack, we update map when moveforward,
+  * update backpack when get items or use items
+  * Some linkedlists are used to maintain items we need to get, trees we need to cut
+  * Some lists record paths to items, trees, treasure or starting point
+  * 2. When finding the path between two points, we use Astar algorithm in which we have
+  * priority Queue and heurisitic function.
+  * 3. After initialize map, 
+  * the player will go to get the item if no risks(without using any stones and raft)
+  * if no such item, he will go to find treasure if he has seen treasure
+  * if he can find the way to treasure, then he will find the way to back home
+  * if he cannot find the way back home, he won't go to get treasure
+  * Then he will continue to find item but maybe use stones or raft
+  * if no item now, he will cut tree if he has axe
+  * ok, he doesn't have axe, so he will explore map now:
+  * 4. Algorithm for expanding map
+  * going to the places which he can see more cells
+  * That means he will go to the left-top, right-top, left-bot and right-top of current location
+  * if there is obstacle on that corner, he will go adajacent places of that corner
+  * But he cannot see some places if use this algorithm, so we scan every cell of current view
+  * Basicly it is using BFS to scan current view, use Astar to go to those locations
+  * 5. After explore whole map, he begin to explore water by using the same method
+  *
+  */
+
+
 import java.util.*;
 import java.io.*;
 import java.net.*;
@@ -85,7 +117,7 @@ public class Agent {
 
 	/* Astar */
     Astar findPath = new Astar();
-
+	
     /**
       * updateMap(char) - update map according to what we see in view
       */
@@ -752,6 +784,7 @@ public class Agent {
     	 * (-2, 2), (-1, 2), (0, 2), (-2, 1), (-1, 1), (0, 1)
     	 */ 
         for(int i = 0; i < 2; i++){
+            boolean break_flag = false;
             for(int j = 0; j < 3; j++){              
                 Coordinate left_top = new Coordinate(curr_location.getX() - 2 + j, curr_location.getY() + 2 - i);
                 /* If this point has been in cornerExpand list, don't put it in cornerList again */
@@ -765,6 +798,7 @@ public class Agent {
          * scan right top of the current view
          */
         for(int i = 0; i < 2; i++){
+            boolean break_flag = false;
             for(int j = 0; j < 3; j++){
                 Coordinate right_top = new Coordinate(curr_location.getX() + 2 - i, curr_location.getY() + 2 - j);
                 if(!cornerExpand.contains(right_top) && !cornerList.contains(right_top) && !checkObstacle(map.get(right_top), onWater)){                   
@@ -777,6 +811,7 @@ public class Agent {
          * scan the right bottom location of the current view
          */
         for(int i = 0; i < 2; i++){
+            boolean break_flag = false;
             for(int j = 0; j < 3; j++){
                 Coordinate right_bot = new Coordinate(curr_location.getX() + 2 - j, curr_location.getY() - 2 + i);
                 if(!cornerExpand.contains(right_bot) && !cornerList.contains(right_bot) && !checkObstacle(map.get(right_bot), onWater)){                  
@@ -789,6 +824,7 @@ public class Agent {
          * scan left bottom location of the current view
          */
         for(int i = 0; i < 2; i++){
+            boolean break_flag = false;
             for(int j = 0; j < 3; j++){
                 Coordinate left_bot = new Coordinate(curr_location.getX() - 2 + i, curr_location.getY() - 2 + j);
                 if(!cornerExpand.contains(left_bot) && !cornerList.contains(left_bot) && !checkObstacle(map.get(left_bot), onWater)){                 

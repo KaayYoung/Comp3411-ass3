@@ -4,7 +4,7 @@ import java.util.Objects;
  * This class implements Comparable.
  * It stores the state of search which is using in A Star Search.
  * @author Yaoyang Cai, z5092306
- *
+ * @author Jingshi Yang z5110579
  */
 public class State implements Comparable<State> {
 

@@ -8,7 +8,7 @@ import static java.lang.Math.abs;
  * If the next step is invalid, then return a huge heuristic,
  * else return a normal heuristic (sum of difference of x-axis and difference of y-axis).
  * @author Yaoyang Cai, z5092306
- * @author 
+ * @author Jingshi Yang z5110579
  */
 public class AstarHeustic implements Heuristic{
 

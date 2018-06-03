@@ -3,7 +3,7 @@ import java.util.HashMap;
 /**
  * Heuristic interface
  * @author Yaoyang Cai, z5092306
- *
+ * @author jingshi Yang z5110579
  */
 public interface Heuristic {
 	/**

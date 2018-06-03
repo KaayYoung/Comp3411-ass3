@@ -6,7 +6,7 @@ import java.util.PriorityQueue;
 /**
  * This class implements A Star Algorithm
  * @author Yaoyang Cai, z5092306
- *
+ * @author Jingshi Yang z5110579
  */
 public class Astar {
     private Heuristic h;
