@@ -145,7 +145,7 @@ public class Agent {
         
         if(map.get(curr_location) == null) System.out.println("1");
         if(map.get(last_location) == null) System.out.println("2");
-        System.out.println("coord:"+last_location.getX()+" "+last_location.getY());
+        System.out.println("coord:"+curr_location.getX()+" "+curr_location.getY());
         if(map.get(new Coordinate(-3, 13)) == null) System.out.println("4");
         if(backpack.get("Stones") == null) System.out.println("3");
         if(map.get(curr_location) != '~' && map.get(last_location) == '~' && backpack.get("Stones") == 0) {
@@ -423,6 +423,7 @@ public class Agent {
             canbetrue = true;
             onWater = true;
             cornerList.clear();
+            System.out.println("first clear");
             cornerList.add(dropwater);
         } 
 
@@ -603,6 +604,7 @@ public class Agent {
         // make moves to item
         if (!moves_to_item.isEmpty()) {
         	moves_to_corner.clear();
+        	System.out.println("second clear");
             System.out.println("moves in item:" + moves_to_item);
             
             goingToItem = true;
@@ -757,6 +759,7 @@ public class Agent {
 
         if (takeTreasure && backHome) {
         	moves_to_corner.clear();
+        	System.out.println("third clear");
         		suc = true;
         	if(!moves_to_treasure.isEmpty()){
         		System.out.println("direction:"+direction);
@@ -810,6 +813,7 @@ public class Agent {
         // make moves to item
         if (!moves_to_item.isEmpty()) {
         	moves_to_corner.clear();
+        	System.out.println("four clear");
             System.out.println("moves in item:" + moves_to_item);
             
             goingToItem = true;
@@ -862,6 +866,7 @@ public class Agent {
 
         if (!moves_to_tree.isEmpty()) {
         	moves_to_corner.clear();
+        	System.out.println("five clear");
         	if (lastMove == 'c') {
 				goingToTree = false;
         	} else {
@@ -933,75 +938,75 @@ public class Agent {
 
     public void exploreMap(char[][] view) {
     	System.out.println("cornerList: ===========" + cornerList);
-    	if(cornerList.contains(curr_location)) {
-            for(int i = 0; i < 2; i++){
-                boolean break_flag = false;
-                for(int j = 0; j < 3; j++){
-                    System.out.println("paaaaaaaaaaaaaasssssssssssssssssssssss44444");
-                    Coordinate left_top = new Coordinate(curr_location.getX() - 2 + j, curr_location.getY() + 2 - i);
-                    if(!cornerExpand.contains(left_top) && !cornerList.contains(left_top) && !checkObstacle(map.get(left_top), onWater)){
-                        System.out.println("watttttter!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        cornerList.add(left_top);
-                        break_flag = true;
-                        break;
-                    }
+//    	if(cornerList.contains(curr_location)) {
+        for(int i = 0; i < 2; i++){
+            boolean break_flag = false;
+            for(int j = 0; j < 3; j++){
+                System.out.println("paaaaaaaaaaaaaasssssssssssssssssssssss44444");
+                Coordinate left_top = new Coordinate(curr_location.getX() - 2 + j, curr_location.getY() + 2 - i);
+                if(!cornerExpand.contains(left_top) && !cornerList.contains(left_top) && !checkObstacle(map.get(left_top), onWater)){
+                    System.out.println("watttttter!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    cornerList.add(left_top);
+                    break_flag = true;
+                    break;
                 }
-                if(break_flag) break;
             }
-            for(int i = 0; i < 2; i++){
-                boolean break_flag = false;
-                for(int j = 0; j < 3; j++){
-                    Coordinate right_top = new Coordinate(curr_location.getX() + 2 - i, curr_location.getY() + 2 - j);
-                    if (checkObstacle(map.get(right_top), onWater)) {
-                        System.out.println("paaaaaaaaaaaaaasssssssssssssssssssssss11111");
-                    }
-                    if(!cornerExpand.contains(right_top) && !cornerList.contains(right_top) && !checkObstacle(map.get(right_top), onWater)){
-                        System.out.println("watttttter!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        cornerList.add(right_top);
-                        break_flag = true;
-                        break;
-                    }
+            if(break_flag) break;
+        }
+        for(int i = 0; i < 2; i++){
+            boolean break_flag = false;
+            for(int j = 0; j < 3; j++){
+                Coordinate right_top = new Coordinate(curr_location.getX() + 2 - i, curr_location.getY() + 2 - j);
+                if (checkObstacle(map.get(right_top), onWater)) {
+                    System.out.println("paaaaaaaaaaaaaasssssssssssssssssssssss11111");
                 }
-                if(break_flag) break;
+                if(!cornerExpand.contains(right_top) && !cornerList.contains(right_top) && !checkObstacle(map.get(right_top), onWater)){
+                    System.out.println("watttttter!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    cornerList.add(right_top);
+                    break_flag = true;
+                    break;
+                }
             }
+            if(break_flag) break;
+        }
 
-            for(int i = 0; i < 2; i++){
-                boolean break_flag = false;
+        for(int i = 0; i < 2; i++){
+            boolean break_flag = false;
 
-                for(int j = 0; j < 3; j++){
-                    System.out.println("paaaaaaaaaaaaaasssssssssssssssssssssss3333333");
-                    Coordinate right_bot = new Coordinate(curr_location.getX() + 2 - j, curr_location.getY() - 2 + i);
-                    if(!cornerExpand.contains(right_bot) && !cornerList.contains(right_bot) && !checkObstacle(map.get(right_bot), onWater)){
-                        System.out.println("watttttter!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        cornerList.add(right_bot);
-                        break_flag = true;
-                        break;
-                    }
+            for(int j = 0; j < 3; j++){
+                System.out.println("paaaaaaaaaaaaaasssssssssssssssssssssss3333333");
+                Coordinate right_bot = new Coordinate(curr_location.getX() + 2 - j, curr_location.getY() - 2 + i);
+                if(!cornerExpand.contains(right_bot) && !cornerList.contains(right_bot) && !checkObstacle(map.get(right_bot), onWater)){
+                    System.out.println("watttttter!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    cornerList.add(right_bot);
+                    break_flag = true;
+                    break;
                 }
-                if(break_flag) break;
             }
+            if(break_flag) break;
+        }
 
-            for(int i = 0; i < 2; i++){
-                boolean break_flag = false;
-                for(int j = 0; j < 3; j++){
-                    Coordinate left_bot = new Coordinate(curr_location.getX() - 2 + i, curr_location.getY() - 2 + j);
-                    if (checkObstacle(map.get(left_bot), onWater)) {
-                        System.out.println("paaaaaaaaaaaaaasssssssssssssssssssssss22222");
-                    }
-                    if(!cornerExpand.contains(left_bot) && !cornerList.contains(left_bot) && !checkObstacle(map.get(left_bot), onWater)){
-                        System.out.println("watttttter!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                        cornerList.add(left_bot);
-                        break_flag = true;
-                        break;
-                    }
+        for(int i = 0; i < 2; i++){
+            boolean break_flag = false;
+            for(int j = 0; j < 3; j++){
+                Coordinate left_bot = new Coordinate(curr_location.getX() - 2 + i, curr_location.getY() - 2 + j);
+                if (checkObstacle(map.get(left_bot), onWater)) {
+                    System.out.println("paaaaaaaaaaaaaasssssssssssssssssssssss22222");
                 }
-                if(break_flag) break;
+                if(!cornerExpand.contains(left_bot) && !cornerList.contains(left_bot) && !checkObstacle(map.get(left_bot), onWater)){
+                    System.out.println("watttttter!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    cornerList.add(left_bot);
+                    break_flag = true;
+                    break;
+                }
             }
+            if(break_flag) break;
+        }
 
         // } else {
         //     System.out.println("oooooooooooooooooooooooooooooooooooooooooooo");
         // }
-    	}
+//    	}
     	for(int i = 0; i < cornerList.size(); i++) {
             State curr_state;
             if (onWater) {
