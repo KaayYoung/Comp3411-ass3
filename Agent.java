@@ -23,14 +23,14 @@ public class Agent {
     final static int INITIALCOORD = 200;
 
     /* Record each cell of view into map */
-    private HashMap<Coordinate, Character> map; 
+    private HashMap<Coordinate, Character> map = new HashMap<>(); 
     /* Record key, axe, stones, raft and treasure */
-    private HashMap<String, Integer> backpack; 
+    private HashMap<String, Integer> backpack = new HashMap<>(); 
     
     /* Record the Item we see in the view */
-    private LinkedList<Coordinate> ItemToTake;
+    private LinkedList<Coordinate> ItemToTake = new LinkedList<>();
     /* Record the tree we see in the view */
-    private LinkedList<Coordinate> TreeToCut;
+    private LinkedList<Coordinate> TreeToCut = new LinkedList<>();
 
     /**
 	  * Use a linkedlist(State) to save the path for 
@@ -38,39 +38,35 @@ public class Agent {
 	  * Use the other linkedlist(Character) to translate
       * state lists to command(Character) list
       */
-    private LinkedList<State> toTreasure;
-    private LinkedList<Character> moves_to_treasure;
-    private LinkedList<State> toItem;
-    private LinkedList<Character> moves_to_item;
-    private LinkedList<State> toStart;
-    private LinkedList<Character> moves_back_start;
-    private LinkedList<State> toTree;
-    private LinkedList<Character> moves_to_tree;
-    private LinkedList<State> todropwater;
-    private LinkedList<Character> moves_to_water;
+    private LinkedList<State> toTreasure = new LinkedList<>();
+    private LinkedList<Character> moves_to_treasure = new LinkedList<>();
+    private LinkedList<State> toItem = new LinkedList<>();
+    private LinkedList<Character> moves_to_item = new LinkedList<>();
+    private LinkedList<State> toStart = new LinkedList<>();
+    private LinkedList<Character> moves_back_start = new LinkedList<>();
+    private LinkedList<State> toTree = new LinkedList<>();
+    private LinkedList<Character> moves_to_tree = new LinkedList<>();
+    private LinkedList<State> todropwater = new LinkedList<>();
+    private LinkedList<Character> moves_to_water = new LinkedList<>();
+    private LinkedList<Character> expand_map_steps = new LinkedList<>();
+    private LinkedList<Coordinate> cornerList = new LinkedList<>();
+    private LinkedList<Coordinate> cornerExpand = new LinkedList<>();
+    private LinkedList<Character> moves_to_corner = new LinkedList<>();
 
-    private LinkedList<Character> expand_map_steps;
-    private LinkedList<Coordinate> cornerList;
-    private LinkedList<Coordinate> cornerExpand;
-    private LinkedList<Character> moves_to_corner;
-
-    private Coordinate curr_location;
-    private Coordinate last_location;
+    private Coordinate curr_location = new Coordinate(0, 0);
+    private Coordinate last_location = new Coordinate(0, 0);
 
     /** 
       * Record the location it should drop into water
       * when finishing exploring land, begin to drop water 
       */
-    private Coordinate dropwater;
+    private Coordinate dropwater = new Coordinate(INITIALCOORD, INITIALCOORD);
     /* Record the treasure coordinate */
-    private Coordinate TreasureCoord;
+    private Coordinate TreasureCoord = new Coordinate(INITIALCOORD, INITIALCOORD);
     
-    private int direction;
-    private int tempDirection;
+    private int direction = NORTH;
+    private int tempDirection = NORTH;
 
-    private int time = 0;
-    private int index = 0;
-    private int times = 0;
     private int used_stone = 0;
 
     private char lastMove = '%';
@@ -87,40 +83,8 @@ public class Agent {
 	private boolean used_raft = false;
 	private boolean went_to_water = false;
 
-	/* import Astar */
+	/* Astar */
     Astar findPath = new Astar();
-	
-    public Agent () {
-        map = new HashMap<>();
-        backpack = new HashMap<>();
-
-        ItemToTake = new LinkedList<>();
-        TreeToCut = new LinkedList<>();
-
-        toTreasure = new LinkedList<>();
-        moves_to_treasure = new LinkedList<>();
-        toItem = new LinkedList<>();
-        moves_to_item = new LinkedList<>();
-        toStart = new LinkedList<>();
-        moves_back_start = new LinkedList<>();
-        toTree = new LinkedList<>();
-        moves_to_tree = new LinkedList<>();
-        todropwater = new LinkedList<>();
-        moves_to_water = new LinkedList<>();
-
-        expand_map_steps = new LinkedList<>();
-        cornerList = new LinkedList<>();
-        moves_to_corner = new LinkedList<>();
-        cornerExpand = new LinkedList<>();
-
-        last_location = new Coordinate(0, 0);
-        curr_location = new Coordinate(0, 0);
-        dropwater = new Coordinate(INITIALCOORD, INITIALCOORD);
-        TreasureCoord = new Coordinate(INITIALCOORD, INITIALCOORD);
- 
-        direction = NORTH;
-        tempDirection = NORTH;
-    }
 
     /**
       * updateMap(char) - update map according to what we see in view
@@ -788,7 +752,6 @@ public class Agent {
     	 * (-2, 2), (-1, 2), (0, 2), (-2, 1), (-1, 1), (0, 1)
     	 */ 
         for(int i = 0; i < 2; i++){
-            boolean break_flag = false;
             for(int j = 0; j < 3; j++){              
                 Coordinate left_top = new Coordinate(curr_location.getX() - 2 + j, curr_location.getY() + 2 - i);
                 /* If this point has been in cornerExpand list, don't put it in cornerList again */
@@ -802,7 +765,6 @@ public class Agent {
          * scan right top of the current view
          */
         for(int i = 0; i < 2; i++){
-            boolean break_flag = false;
             for(int j = 0; j < 3; j++){
                 Coordinate right_top = new Coordinate(curr_location.getX() + 2 - i, curr_location.getY() + 2 - j);
                 if(!cornerExpand.contains(right_top) && !cornerList.contains(right_top) && !checkObstacle(map.get(right_top), onWater)){                   
@@ -815,7 +777,6 @@ public class Agent {
          * scan the right bottom location of the current view
          */
         for(int i = 0; i < 2; i++){
-            boolean break_flag = false;
             for(int j = 0; j < 3; j++){
                 Coordinate right_bot = new Coordinate(curr_location.getX() + 2 - j, curr_location.getY() - 2 + i);
                 if(!cornerExpand.contains(right_bot) && !cornerList.contains(right_bot) && !checkObstacle(map.get(right_bot), onWater)){                  
@@ -828,7 +789,6 @@ public class Agent {
          * scan left bottom location of the current view
          */
         for(int i = 0; i < 2; i++){
-            boolean break_flag = false;
             for(int j = 0; j < 3; j++){
                 Coordinate left_bot = new Coordinate(curr_location.getX() - 2 + i, curr_location.getY() - 2 + j);
                 if(!cornerExpand.contains(left_bot) && !cornerList.contains(left_bot) && !checkObstacle(map.get(left_bot), onWater)){                 
