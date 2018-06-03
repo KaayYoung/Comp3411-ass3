@@ -5,8 +5,6 @@
  *  UNSW Session 1, 2018
 */
 
-// TODO: go to 4 corners of current view, set up one global variable to store the number of expands
-
 import java.util.*;
 import java.io.*;
 import java.net.*;
@@ -15,20 +13,31 @@ import static java.lang.Math.abs;
 
 public class Agent {
 
+	/* Four directions */
     final static int EAST = 0;
     final static int NORTH = 1;
     final static int WEST = 2;
     final static int SOUTH = 3;
 
+    /* Initial Coordinate (Can not be reached in this map) */
     final static int INITIALCOORD = 200;
 
-    private HashMap<Coordinate, Character> map;
-    private static HashMap<String, Integer> backpack;
-    private static HashMap<Coordinate, Integer> explored;
+    /* Record each cell of view into map */
+    private HashMap<Coordinate, Character> map; 
+    /* Record key, axe, stones, raft and treasure */
+    private HashMap<String, Integer> backpack; 
     
-    private LinkedList<Coordinate> CannotGet;
+    /* Record the Item we see in the view */
     private LinkedList<Coordinate> ItemToTake;
+    /* Record the tree we see in the view */
     private LinkedList<Coordinate> TreeToCut;
+
+    /**
+	  * Use a linkedlist(State) to save the path for 
+	  * treasure, item, starting point, tree, and the place to drop water
+	  * Use the other linkedlist(Character) to translate
+      * state lists to command(Character) list
+      */
     private LinkedList<State> toTreasure;
     private LinkedList<Character> moves_to_treasure;
     private LinkedList<State> toItem;
@@ -37,20 +46,26 @@ public class Agent {
     private LinkedList<Character> moves_back_start;
     private LinkedList<State> toTree;
     private LinkedList<Character> moves_to_tree;
+    private LinkedList<State> todropwater;
+    private LinkedList<Character> moves_to_water;
+
     private LinkedList<Character> expand_map_steps;
     private LinkedList<Coordinate> cornerList;
     private LinkedList<Coordinate> cornerExpand;
-    private LinkedList<State> todropwater;
-    private LinkedList<Character> moves_to_water;
-    private LinkedList<State> todoor;
-    private LinkedList<Character> moves_to_door;
+    private LinkedList<Character> moves_to_corner;
 
-    private Coordinate door;
+    private Coordinate curr_location;
     private Coordinate last_location;
+
+    /** 
+      * Record the location it should drop into water
+      * when finishing exploring land, begin to drop water 
+      */
     private Coordinate dropwater;
+    /* Record the treasure coordinate */
     private Coordinate TreasureCoord;
-    private static Coordinate curr_location;
-    private static int direction;
+    
+    private int direction;
     private int tempDirection;
 
     private int time = 0;
@@ -58,33 +73,30 @@ public class Agent {
     private int times = 0;
     private int used_stone = 0;
 
-    private char lastMove;
-    private char currMove;
+    private char lastMove = '%';
+    private char currMove = '%';
 
-    private int num_stones;
-	private boolean takeTreasure;
-	private boolean backHome;
-	private boolean goingToItem;
-	private boolean goingToTree;
-    private boolean suc;
-    private boolean onWater;
-    private boolean standingOnWater;
-    private boolean canbetrue;
-	private boolean goAround;
+    /* Below are boolean variables for checking different cases */
+	private boolean takeTreasure = false;
+	private boolean backHome = false;
+	private boolean goingToItem = false;
+	private boolean goingToTree = false;
+    private boolean onWater = false;
+    private boolean standingOnWater = false;
+    private boolean canbetrue = false;
 	private boolean used_raft = false;
 	private boolean went_to_water = false;
 
-    Astar findPath;
-	private LinkedList<Character> moves_to_corner;
+	/* import Astar */
+    Astar findPath = new Astar();
 	
     public Agent () {
         map = new HashMap<>();
         backpack = new HashMap<>();
-        explored = new HashMap<>();
 
-        CannotGet = new LinkedList<>();
         ItemToTake = new LinkedList<>();
         TreeToCut = new LinkedList<>();
+
         toTreasure = new LinkedList<>();
         moves_to_treasure = new LinkedList<>();
         toItem = new LinkedList<>();
@@ -93,79 +105,65 @@ public class Agent {
         moves_back_start = new LinkedList<>();
         toTree = new LinkedList<>();
         moves_to_tree = new LinkedList<>();
+        todropwater = new LinkedList<>();
+        moves_to_water = new LinkedList<>();
+
         expand_map_steps = new LinkedList<>();
         cornerList = new LinkedList<>();
         moves_to_corner = new LinkedList<>();
         cornerExpand = new LinkedList<>();
-        todropwater = new LinkedList<>();
-        moves_to_water = new LinkedList<>();
-        todoor = new LinkedList<>();
-        moves_to_door = new LinkedList<>();
 
-        door = new Coordinate(INITIALCOORD, INITIALCOORD);
         last_location = new Coordinate(0, 0);
+        curr_location = new Coordinate(0, 0);
         dropwater = new Coordinate(INITIALCOORD, INITIALCOORD);
         TreasureCoord = new Coordinate(INITIALCOORD, INITIALCOORD);
-        curr_location = new Coordinate(0, 0);
+ 
         direction = NORTH;
         tempDirection = NORTH;
-
-        lastMove = '%';
-        currMove = '%';
-        num_stones = 0;
-
-        takeTreasure = false;
-        backHome = false;
-        goingToItem = false;
-        goingToTree = false;
-        suc = false;
-        goAround = false;
-        
-        onWater = false;
-        standingOnWater = false;
-        canbetrue = false;
-        findPath = new Astar();
     }
 
+    /**
+      * updateMap(char) - update map according to what we see in view
+      */
     public void updateMap(char view[][]) {
 
-    	System.out.println("start update:"+curr_location.getX()+" "+curr_location.getY());
         if (currMove == '%') {
+        	/* At the very beginning, initalize map */
             initializeMap(view);
         } else if (currMove == 'r') {
+        	/* Turn right is clockwise */
             clockwise();
         } else if (currMove == 'l') {
+        	/* Turn left is anticlockwise */
             anticlockwise();
         } else if (currMove == 'f') {
+        	/* When move forward, call MoveForward() */
             MoveForward(view);
         } else if (lastMove == 'c') {
-        	
+        	/* When cut tree, currMove is 'f', lastMove is 'c' */ 
         	goingToTree = false;
         }
-        
-        System.out.println("coord:"+curr_location.getX()+" "+curr_location.getY());
-        System.out.println("direction"+direction);
-//        if(map.get(curr_location) == null) System.out.println("1");
-//        if(map.get(last_location) == null) System.out.println("2");
-//        
-//        if(map.get(new Coordinate(-3, 13)) == null) System.out.println("4");
-//        if(backpack.get("Stones") == null) System.out.println("3");
+
+        /**
+		  *	Update backpack and map when the player get 
+		  * key, axe, stone or treasure or cut tree or just
+		  * get on land after use raft
+          */
         if(map.get(curr_location) != '~' && map.get(last_location) == '~' && backpack.get("Stones") == 0) {
         	backpack.put("Raft", 0);
         	standingOnWater = false;
         }
  
         if (map.get(curr_location) == '$') {
+        	/* When get treasure, set treasure coordinate to initialize state */
             TreasureCoord.setX(INITIALCOORD);
             TreasureCoord.setY(INITIALCOORD);
-            //found = true;
-//            takeTreasure = true;
             map.put(new Coordinate(curr_location.getX(), curr_location.getY()), ' ');
-            System.out.println("cur111111111:"+curr_location.getX()+" "+curr_location.getY());
             backpack.put("Treasure", 1);
         } else if (map.get(curr_location) == 'k') {
             map.put(new Coordinate(curr_location.getX(), curr_location.getY()), ' ');
             goingToItem = false;
+            /* remove the item from ItemToTake list when we actually get it */
             ItemToTake.remove(curr_location);
             backpack.put("Key", 1);
         } else if (map.get(curr_location) == 'a') {
@@ -178,9 +176,7 @@ public class Agent {
             goingToItem = false;
             ItemToTake.remove(curr_location);
             backpack.put("Stones", backpack.get("Stones") + 1);
-//            System.out.println("Stones added:"+backpack.get("Stones"));
         } else if (map.get(curr_location) != '~' && map.get(last_location) == '~' && backpack.get("Stones") == 0) {
-        	System.out.println("decrement here");
             backpack.put("Raft", 0);
             standingOnWater = false;
         } else if (map.get(curr_location) == '~' && backpack.get("Stones") == 0 && backpack.get("Raft") == 1) {
@@ -189,12 +185,11 @@ public class Agent {
         	backpack.put("Raft", 1);
         	map.put(new Coordinate(curr_location.getX(), curr_location.getY()), ' ');
         }
-        
-        
-        System.out.println("end update:"+curr_location.getX()+" "+curr_location.getY());
     }
 
-
+    /**
+      * initializeMap(char) - Call at the very beginning, only called once
+      */
     public void initializeMap (char view[][]) {
         backpack.put("Raft",0);
         backpack.put("Key",0);
@@ -204,19 +199,21 @@ public class Agent {
         cornerList.add(new Coordinate(0,0));
 
         int x = -2;
+        /* for each column */
         for (int col = 0; col < 5; col++) {
             int y = 2;
+            /* for each row */
             for (int row = 0; row < 5; row++) {
                 Coordinate coord = new Coordinate(x, y);
-                
+                /* setup the content of the starting point is'#' */
                 if (x == 0 && y ==0) {
-                    // initialize the starting point as #
-//                    direction = 0;
                     map.put(coord, '#');
-                    explored.put(coord, 0);
                 } else {
+                	/* 
+                	 * Add the Item or Tree coordinate into list or setup Treasure coordinate
+                	 * when initialize map if we see them 
+                	 */
                     map.put(coord, view[row][col]);
-                    explored.put(coord, 0);
                     if (view[row][col] == 'k' || view[row][col] == 'a' || view[row][col] == 'o' ) {
                         ItemToTake.add(coord);
                     }
@@ -228,34 +225,187 @@ public class Agent {
                     if (view[row][col] == 'T') {
                         TreeToCut.add(coord);
                     }
-                    if (view[row][col] == '-') {
-                        door.setX(coord.getX());
-                        door.setY(coord.getY());
-                    }
                 }
-
                 y--;
             }
             x++;
         }
-        System.out.println("ininininininini");
     }
 
+    /**
+      * clockwise() - Call this function when turn right('r')
+      */
     public void clockwise() {
-    	System.out.println("direction-- : "+direction);
         direction--;
         direction = direction % 4;
         if (direction < 0) direction = direction + 4;
     }
 
+    /**
+      * anticlockwise() - Call this function when turn left('l')
+      */
     public void anticlockwise() {
-    	System.out.println("direction++ : "+direction);
     	direction++;
         direction = direction % 4;
     }
 
+    /**
+      * findDropWater(char) - during the player exploring land
+      * find whether there exist some water which he can drop into
+      * and record the location
+      */
+    public void findDropWater(char view[][]) {
+    	int counter = 0;
 
+    	/* check the front five characters are all water */
+    	for (int i = 0; i < 5; i++) {
+            if (view[1][i] == '~') {
+                counter++;
+            }
+        } 
 
+        /* store the coordinate of the spot that we can enter water */
+		if (counter == 5) {
+        	if (direction == EAST) {
+                dropwater.setX(curr_location.getX() + 1);
+                dropwater.setY(curr_location.getY());
+            } else if (direction == NORTH) {
+            	dropwater.setX(curr_location.getX());
+                dropwater.setY(curr_location.getY() + 1);
+            } else if (direction == WEST) {
+            	dropwater.setX(curr_location.getX() - 1);
+                dropwater.setY(curr_location.getY());
+            } else if (direction == SOUTH) {
+            	dropwater.setX(curr_location.getX());
+                dropwater.setY(curr_location.getY() - 1);
+            }
+        }
+
+        /* check the right five characters are all water */
+        counter = 0;
+        for (int i = 0; i < 5; i++) {
+            if (view[i][3] == '~') {
+                counter++;
+            }
+        } 
+
+        /* store the coordinate of the spot that we can enter water */
+        if (counter == 5) {
+        	if (direction == EAST) {
+        		dropwater.setX(curr_location.getX());
+                dropwater.setY(curr_location.getY() - 1);
+        	} else if (direction == NORTH) {
+        		dropwater.setX(curr_location.getX() + 1);
+                dropwater.setY(curr_location.getY());
+        	} else if (direction == WEST) {
+        		dropwater.setX(curr_location.getX());
+                dropwater.setY(curr_location.getY() + 1);
+        	} else if (direction == SOUTH) {
+        		dropwater.setX(curr_location.getX() - 1);
+                dropwater.setY(curr_location.getY());
+        	}
+        }
+    }
+
+    /**
+      * MoveForward(char) - update map when move forward one step 
+      * for each direction 
+      */
+    public void MoveForward(char view[][]) {
+
+    	/* setup last_location just before curr_location will be changed */
+        last_location.setX(curr_location.getX());
+        last_location.setY(curr_location.getY());
+
+        if (direction == EAST) {
+            curr_location.setX(curr_location.getX() + 1);
+            int expandPart = 0;
+
+            /* We can see one more column when move EAST */
+            for (int row = 2; row >= -2; row--) {
+                Coordinate expandRow = new Coordinate(curr_location.getX() + 2, curr_location.getY() + row);
+                char expandChar = view[0][expandPart];
+                map.put(expandRow, expandChar);
+                isItemInView(expandChar, expandRow);
+                expandPart++;
+            }
+            findDropWater(view);
+        } else if (direction == NORTH) {
+            curr_location.setY(curr_location.getY() + 1);
+            int expandPart = 0;
+            /* Can see one more row when move NORTH */
+            for (int col = -2; col <= 2; col++) {
+                Coordinate expandCol = new Coordinate(curr_location.getX() + col, curr_location.getY() + 2);
+                char expandChar = view[0][expandPart];
+                map.put(expandCol, expandChar);
+                isItemInView(expandChar, expandCol);
+                expandPart++;
+            }
+            findDropWater(view);
+        } else if (direction == WEST) {
+            curr_location.setX(curr_location.getX() - 1);
+            int expandPart = 0;
+            /* Can see one more column when move west */
+            for (int row = -2; row <= 2; row++) {
+                Coordinate expandRow = new Coordinate(curr_location.getX() - 2, curr_location.getY() + row);
+                char expandChar = view[0][expandPart];
+                map.put(expandRow, expandChar);
+                isItemInView(expandChar, expandRow);
+                expandPart++;
+            }
+            findDropWater(view);
+        } else if (direction == SOUTH) {
+            curr_location.setY(curr_location.getY() - 1);
+            int expandPart = 0;
+            /* Can see one move row when move SOUTH */
+            for (int col = 2; col >= -2; col --) {
+                Coordinate expandCol = new Coordinate(curr_location.getX() + col, curr_location.getY() - 2);
+                char expandChar = view[0][expandPart];
+                map.put(expandCol, expandChar);
+                isItemInView(expandChar, expandCol);
+                expandPart++;
+            }
+            findDropWater(view);
+        }
+
+        /**
+          * Probably should remove the tree when we actually cut it
+          * not when we poll this tree from TreeToCut list
+          */
+        if (lastMove == 'c') {
+            for (int i = 0; i < TreeToCut.size(); i++) {
+                if (curr_location.equals(TreeToCut.get(i))) {
+                   	
+                    TreeToCut.remove(TreeToCut.get(i));
+                }
+            }
+            lastMove = '%';
+        }
+
+        /**
+          * When we arrive at the location where the player should drop into water 
+          * The player should begin to explore water
+          * setup up control variable(onWater) for future use
+          */
+        if (curr_location.equals(dropwater) && !canbetrue) {
+            canbetrue = true;
+            onWater = true;
+            cornerList.clear();
+            cornerList.add(dropwater);
+        } 
+
+        /* place a store on current location */
+        if (map.get(curr_location) == '~' && backpack.get("Stones") > 0){
+            backpack.put("Stones", backpack.get("Stones") - 1);
+            map.put(new Coordinate(curr_location.getX(), curr_location.getY()), 'O');
+        }    
+
+    }
+
+    /**
+      * isItemInView(char, Coordinate) - update ItemToTaks list, TreeToCut list
+      * and record Treasure Coordinate when we see them in view
+      */
     public void isItemInView (char item, Coordinate coord) {
         if (item == 'k' || item == 'a' || item == 'o') {
             if (!ItemToTake.contains(coord) && map.containsKey(coord)) ItemToTake.add(coord);
@@ -266,311 +416,91 @@ public class Agent {
         if (item == 'T') {
         	if (!TreeToCut.contains(coord)) TreeToCut.add(coord);
         }
-        if (item == '-') {
-            door.setX(coord.getX());
-            door.setY(coord.getY());
-        }
     }
 
-    public void MoveForward(char view[][]) {
-    	System.out.println("start moveforward:"+curr_location.getX()+" "+curr_location.getY());
-        last_location.setX(curr_location.getX());
-        last_location.setY(curr_location.getY());
-        if(explored.get(curr_location) == null) {
-        	explored.put(curr_location, 0);
-        } else {
-        	explored.put(curr_location, explored.get(curr_location) +  1);
-        }
-        System.out.println("curr_move in moveforward:" + currMove);
-        if (direction == EAST) {
-            curr_location.setX(curr_location.getX() + 1);
-            int expandPart = 0;
-
-            // We can see one more column when move EAST, get the coordinate for
-            // that column from the first row to the fifth row
-            for (int row = 2; row >= -2; row--) {
-                Coordinate expandRow = new Coordinate(curr_location.getX() + 2, curr_location.getY() + row);
-                char expandChar = view[0][expandPart];
-                map.put(expandRow, expandChar);
-                if(!explored.containsKey(expandRow)) explored.put(expandRow, 0);
-                isItemInView(expandChar, expandRow);
-                expandPart++;
-            }
-
-            int counter = 0;
-            for (int i = 0; i < 5; i++) {
-                if (view[1][i] == '~') {
-                    counter++;
-                }
-            } 
-            if (counter == 5) {
-                dropwater.setX(curr_location.getX() + 1);
-                dropwater.setY(curr_location.getY());
-            }
-
-            counter = 0;
-            for (int i = 0; i < 5; i++) {
-                if (view[i][3] == '~') {
-                    counter++;
-                }
-            } 
-            if (counter == 5) {
-                dropwater.setX(curr_location.getX());
-                dropwater.setY(curr_location.getY() - 1);
-            }
-
-        } else if (direction == NORTH) {
-            curr_location.setY(curr_location.getY() + 1);
-            int expandPart = 0;
-            for (int col = -2; col <= 2; col++) {
-                Coordinate expandCol = new Coordinate(curr_location.getX() + col, curr_location.getY() + 2);
-                char expandChar = view[0][expandPart];
-                map.put(expandCol, expandChar);
-                if(!explored.containsKey(expandCol)) explored.put(expandCol, 0);
-                isItemInView(expandChar, expandCol);
-                expandPart++;
-            }
-            int counter = 0;
-            for (int i = 0; i < 5; i++) {
-                if (view[1][i] == '~') {
-                    counter++;
-                }
-            } 
-            if (counter == 5) {
-                dropwater.setX(curr_location.getX());
-                dropwater.setY(curr_location.getY() + 1);
-            }
-
-            counter = 0;
-            for (int i = 0; i < 5; i++) {
-                if (view[i][3] == '~') {
-                    counter++;
-                }
-            } 
-            if (counter == 5) {
-                dropwater.setX(curr_location.getX() + 1);
-                dropwater.setY(curr_location.getY());
-            }
-        } else if (direction == WEST) {
-            curr_location.setX(curr_location.getX() - 1);
-            int expandPart = 0;
-            for (int row = -2; row <= 2; row++) {
-                Coordinate expandRow = new Coordinate(curr_location.getX() - 2, curr_location.getY() + row);
-                char expandChar = view[0][expandPart];
-                map.put(expandRow, expandChar);
-                if(!explored.containsKey(expandRow)) explored.put(expandRow, 0);
-                isItemInView(expandChar, expandRow);
-                expandPart++;
-            }
-            int counter = 0;
-            for (int i = 0; i < 5; i++) {
-                if (view[1][i] == '~') {
-                    counter++;
-                }
-            } 
-            if (counter == 5) {
-                dropwater.setX(curr_location.getX() - 1);
-                dropwater.setY(curr_location.getY());
-            }
-
-            counter = 0;
-            for (int i = 0; i < 5; i++) {
-                if (view[i][3] == '~') {
-                    counter++;
-                }
-            } 
-            if (counter == 5) {
-                dropwater.setX(curr_location.getX());
-                dropwater.setY(curr_location.getY() + 1);
-            }
-        } else if (direction == SOUTH) {
-            curr_location.setY(curr_location.getY() - 1);
-            int expandPart = 0;
-            for (int col = 2; col >= -2; col --) {
-                Coordinate expandCol = new Coordinate(curr_location.getX() + col, curr_location.getY() - 2);
-                char expandChar = view[0][expandPart];
-                map.put(expandCol, expandChar);
-                if(!explored.containsKey(expandCol)) explored.put(expandCol, 0);
-                isItemInView(expandChar, expandCol);
-                expandPart++;
-            }
-            int counter = 0;
-            for (int i = 0; i < 5; i++) {
-                if (view[1][i] == '~') {
-                    counter++;
-                }
-            } 
-            if (counter == 5) {
-                dropwater.setX(curr_location.getX());
-                dropwater.setY(curr_location.getY() - 1);
-            }
-        }
-
-        if (lastMove == 'c') {
-        	System.out.println("last:" + lastMove);
-        	System.out.println("cuuuuuut");
-           	System.out.println(curr_location.getX() + " " + curr_location.getY());
-            for (int i = 0; i < TreeToCut.size(); i++) {
-                if (curr_location.equals(TreeToCut.get(i))) {
-                   	System.out.println("removeTree:" + TreeToCut.get(i).getX() + " " + TreeToCut.get(i).getY());
-                    TreeToCut.remove(TreeToCut.get(i));
-                }
-            }
-            lastMove = '%';
-        }
-
-
-
-        if (curr_location.equals(dropwater) && !canbetrue) {
-            canbetrue = true;
-            onWater = true;
-            cornerList.clear();
-            System.out.println("first clear");
-            cornerList.add(dropwater);
-        } 
-
-        if (map.get(curr_location) == '~' && backpack.get("Stones") > 0){
-            backpack.put("Stones", backpack.get("Stones") - 1);
-            // System.out.println("Stones:....................." + backpack.get("Stones"));
-            map.put(new Coordinate(curr_location.getX(), curr_location.getY()), 'O');
-        }
-        
-        System.out.println("end moveforward:"+curr_location.getX()+" "+curr_location.getY());
-
-    }
-
-
+    /**
+      * stateToMove(LinkedList) - Translate a list of states to a list of Commands(Character)
+      */
     public LinkedList<Character> stateToMove(LinkedList<State> list_of_states) {
 
         LinkedList<Character> move_instructions = new LinkedList<>();
         LinkedList<Character> listOfMoves;
 
-
         State curr_state = list_of_states.pollLast();
-        // System.out.println("before:"+tempDirection);
         tempDirection = direction;
-        // System.out.println("after:"+tempDirection);
         
         while (!list_of_states.isEmpty()) {
             listOfMoves = moveDecision(curr_state.getCurr_coord(), list_of_states.peekLast().getCurr_coord());
-//            System.out.println("=============");
-//            System.out.println(listOfMoves);
-//            System.out.println("=============");
             move_instructions.addAll(listOfMoves);
             curr_state = list_of_states.pollLast();
         }
 
         return move_instructions;
     }
-
+    
+    /**
+      * moveDecision(Coordinate, Coordinate) - This function is called in stateToMove,
+      * aiming to calculat out the commands we need('r', 'l', 'f', 'c', 'u')
+      */
     public LinkedList<Character> moveDecision(Coordinate curr_coord, Coordinate next_coord) {
 
-//    	System.out.println("-------------");
-//    	System.out.println(direction);
-//    	System.out.println("-------------");
     	LinkedList<Character> list_moves = new LinkedList<>();
-        int newDireciont = 0;
-
+        /* used to spin to the correct direction */
+        int curDirection = 0;
 
         if (curr_coord.getX() - next_coord.getX() < 0) {
-//            System.out.println("E");
-            newDireciont = EAST;
+            curDirection = EAST;
         } else if (curr_coord.getY() - next_coord.getY() < 0) {
-//            System.out.println("N");
-//            System.out.println(curr_coord.getX()+" "+curr_coord.getY());
-//            System.out.println(next_coord.getX()+" "+next_coord.getY());
-            newDireciont = NORTH;
+            curDirection = NORTH;
         } else if (curr_coord.getX() - next_coord.getX() > 0) {
-//            System.out.println("W");
-            newDireciont = WEST;
+            curDirection = WEST;
         } else if (curr_coord.getY() - next_coord.getY() > 0) {
-//            System.out.println("S");
-            newDireciont = SOUTH;
+            curDirection = SOUTH;
         }
 
-//        System.out.println("+++++++++++++++");
-//        System.out.println("Curr "+direction+" New "+newDireciont);
-//        System.out.println("+++++++++++++++");
-        int newDirection = newDireciont;
-//        System.out.println("temp:"+tempDirection);
-//        System.out.println("nD:"+newDireciont);
-        if (tempDirection - newDireciont < 0) {
-            if (tempDirection - newDireciont == -3) {
+        /* store the curDirection before operations */
+        int newDirection = curDirection;
+        if (tempDirection - curDirection < 0) {
+            if (tempDirection - curDirection == -3) {
                 list_moves.add('r');
             } else {
-                while (tempDirection - newDireciont != 0) {
-                    newDireciont--;
+                while (tempDirection - curDirection != 0) {
+                    curDirection--;
                     list_moves.add('l');
                 }
             }
-        } else if (tempDirection - newDireciont > 0) {
-            if (tempDirection - newDireciont == 3) {
+        } else if (tempDirection - curDirection > 0) {
+            if (tempDirection - curDirection == 3) {
               list_moves.add('l');
             } else {
-                while (tempDirection - newDireciont != 0) {
-                    newDireciont++;
+                while (tempDirection - curDirection != 0) {
+                    curDirection++;
                     list_moves.add('r');
                 }
             }
         }
 
-//        System.out.println("next_coord:" + next_coord.getX());
         if (map.get(next_coord) == '-' && backpack.get("Key") == 1) {
             list_moves.add('u');
-            door.setX(INITIALCOORD);
-            door.setY(INITIALCOORD);
             map.put(new Coordinate(next_coord.getX(), next_coord.getY()), ' ');
         } else if (map.get(next_coord) == 'T' && backpack.get("Axe") == 1) {
             list_moves.add('c');
         } 
-        // else if (map.get(next_coord) == '~' && backpack.get("Stones") > 0) {
-        // 	 //System.exit(0);
-        	
-        //     backpack.put("Stones", backpack.get("Stones") - 1);
-        //     System.out.println("Stones:....................." + backpack.get("Stones"));
-        //     map.put(next_coord, 'O');
-        // } 
+
+        /* always 'f' after each opeartion */
         list_moves.add('f');
+
+        /* after operations, restore the tempDirection */
         tempDirection = newDirection;
+
         return list_moves;
     }
 
-    
-    
-
-    // public void expandMap(char[][] view) {
-
-    // 	char front_view = view[1][2];
-    // 	char left_view = view[2][1];
-
-    // 	char next_step = '%';
-
-    // 	if (checkObstacle(left_view)) {
-    // 	    goAround = true;
-    //     }
-
-    //     if (checkObstacle(front_view)) {
-    // 	    next_step = 'r';
-    //     } else {
-    // 	    next_step = 'f';
-    //     }
-
-    //     if (goAround && !checkObstacle(left_view) && currMove != 'l') {
-    // 	    next_step = 'l';
-    //     }
-
-    //     if (2 < explored.get(curr_location) && explored.get(curr_location) < 5) {
-    //         // System.exit(0);
-    // 	    goAround = false;
-    //         if (backpack.get("Raft") == 1) {
-    //         	System.out.println("expand_water:true");
-    //             expand_water = true;
-    //         }
-    //     }
-    //     expand_map_steps.add(next_step);
-    // }
-
-
+    /**
+      * checkObstacle(char, boolean) - When the player is on the land
+      * the obstacle are T, -, *, ~, .
+      * When the player is on water, all other objects are obstacle
+      */
     private boolean checkObstacle(char cell, boolean onWater) {
         if (onWater) {
             if (cell != '~') return true;
@@ -580,219 +510,166 @@ public class Agent {
         return false;
     }
 
-
     public char get_action(char view[][]) {
 
         updateMap(view);
 
+        /** 
+          * Find Item with no risks 
+          * goingToItem: ensure the player only go to get the item just polled from ItemToTake list
+          * moves_to_item.isEmpty(): Basicly improve effiency
+          * takeTreasure: The player isn't on the way to Treasure
+          * onWater: The player is not on water
+          * We go to get the item if the player won't use any stones or raft on the path to that item
+          * To ensure the path is safe, we won't pass in any stones and raft 
+          */
         if (!ItemToTake.isEmpty() && !goingToItem && moves_to_item.isEmpty() && !takeTreasure && !onWater) {
-
+ 			
+ 			/* Use loop to find the item which the player can get */
         	for (int i = 0; i < ItemToTake.size(); i++) {
         		Coordinate curr_Item = ItemToTake.get(i);
-        		System.out.println("polledItem with no risk:" + curr_Item.getX() + " " + curr_Item.getY());
-        		System.out.println("curr coord:"+curr_location.getX()+" "+curr_location.getY());
-            	System.out.println("curr_Item:" + curr_Item.getX()+" "+curr_Item.getY());
-            	System.out.println("item raft:"+backpack.get("Raft"));
             	int initialH = abs(curr_location.getX() - curr_Item.getX()) + abs(curr_location.getY() - curr_Item.getY());
             	State curr_state = new State(curr_location, 0, initialH, 0, 0, null);
             	toItem = findPath.aStarSearch(curr_state, curr_Item, map, backpack, onWater);
+            	/* Have found the path to that item, break */
                 if(!toItem.isEmpty()) break;
         	}
             if (!toItem.isEmpty()) {
+            	/* Translate to Commands */
             	moves_to_item = stateToMove(toItem);
             }
         }
 
-        // make moves to item
+        /* make moves to that item */
         if (!moves_to_item.isEmpty()) {
+        	/* 
+        	 * moves_to_corner is a list in which there are corner places the player needs to go to 
+        	 * must not mess up the corner list with moves_to_item
+        	 * explain more explicitly in our algorithm
+        	 */
         	moves_to_corner.clear();
-        	System.out.println("second clear");
-            System.out.println("moves in item:" + moves_to_item);
-            
             goingToItem = true;
             currMove = moves_to_item.poll();
+
             if (currMove == 'c') {
                 lastMove = currMove;
             }
             return currMove;
         }
         
-        
-
-
-        System.out.println("Treasure:" + TreasureCoord.getX() );
-        if (takeTreasure) {
-            System.out.println("takeTreasure ==== true");
-        }
-        // Find the path to treasure
-        if (TreasureCoord.getX() != 200 && !takeTreasure && backpack.get("Treasure") == 0){ // && !goingToTreasure) {
-        	System.out.println("On the way to Treasure");
-        	System.out.println("treasure or not:"+backpack.get("Treasure"));
-            // int initialH = abs(curr_location.getX() - TreasureCoord.getX()) + abs(curr_location.getY() - TreasureCoord.getY());
-            
+        /**
+          * Find treasure
+          * 1. When we know where the treasure is
+          * 2. We haven't found the treasure
+          */
+        if (TreasureCoord.getX() != 200 && !takeTreasure && backpack.get("Treasure") == 0){
             State curr_state = new State(curr_location, 0, 0, backpack.get("Stones"), -1, null);
             if (backpack.get("Raft") == 1) {
                 curr_state.setHave_raft(1);
             } else {
                 curr_state.setHave_raft(0);
             }
-            System.out.println("curr_state_stone1: " + curr_state.getNumOfStones() + "  raft: " + curr_state.isHave_raft());
+            
+            /* run A Star Search */
             toTreasure = findPath.aStarSearch(curr_state, TreasureCoord, map, backpack, onWater);
-            System.out.println("curr_state_stone2: " + curr_state.getNumOfStones() + "  raft: " + curr_state.isHave_raft());
-            //if(backpack.get("Stones") == 3) System.exit(0);
+            
             for(int i = 0; i < toTreasure.size(); i++) {
+            	/* check the path is on water */
             	if(map.get(toTreasure.get(i).getCurr_coord()) == '~') {
             		went_to_water = true;
             	}
+            	/* count used stones in finding treasure */
             	if(map.get(toTreasure.get(i).getCurr_coord()) == '~' && backpack.get("Stones") != 0) {
             		used_stone++;
             		backpack.put("Stones", backpack.get("Stones")-1);
-            		System.out.println("stone used in search"+used_stone);
-//            		System.exit(0);
             	}
             }
+
+            /* translate */
             if (!toTreasure.isEmpty()) moves_to_treasure = stateToMove(toTreasure);
             
+            /* check if the raft is used then set raft number to 0 */
             if (!moves_to_treasure.isEmpty()) {
-//            	if (map.get(curr_location) != '~') {
-//            		standingOnWater = false;
-//            	}
             	if(went_to_water && used_stone == 0) {
             		used_raft = true;
             		backpack.put("Raft", 0);
             		went_to_water = false;
             	}
-//                if (standingOnWater) {
-//                    if(backpack.get("Stones") == 0) backpack.put("Raft", 0);
-//                    System.out.println("decrement there");
-//                    used_raft = true;
-//                } else {
-//                	System.out.println("not standing");
-//                }
                 takeTreasure = true; 
             } 
             
         }
-        if (takeTreasure) {
-        	System.out.println("size of treasure"+moves_to_treasure.size());
-        	System.out.println("takeTreasure: true");
-
-        }
 
         
-        // Find the path to come back
-        if (moves_back_start.isEmpty() && (takeTreasure || backpack.get("Treasure") == 1)){ //&& !comingBack) {
-        	System.out.println("Back to starting point from treasure");
-            // int initialH = abs(curr_location.getX() - TreasureCoord.getX()) + abs(curr_location.getY() - TreasureCoord.getY());
-            System.out.println("ready to increase stone");
-        	System.out.println("num of stone:"+backpack.get("Stones"));
-            if(used_stone != 0) {
-        		System.out.println("increased");
+        /** 
+          * Find the path to come back
+          * moves_back_start,isEmpty(): ensure path to back is empty
+          * takeTreasure || backpack.get("Treasure") == 1: ensure we have found the treasure
+          */
+        if (moves_back_start.isEmpty() && (takeTreasure || backpack.get("Treasure") == 1)){
+            if(used_stone != 0) {        		
             	backpack.put("Stones", backpack.get("Stones")+used_stone);
-            } else {
-            	System.out.println("did not increase");
-            }
-            
-            
-            System.out.println("num of stone:"+backpack.get("Stones"));
+            } 
+
         	State curr_state;
-        	if(takeTreasure) {
-        		System.out.println("in here");
+        	/*
+        	 * If the path to treasure has been calculated before,
+        	 * find the path from Treasure location to starting point 
+        	 * else 
+        	 * find the path from current location to starting point
+        	 */ 
+        	if(takeTreasure) {      		
             	curr_state = new State(TreasureCoord, 0, 0, backpack.get("Stones"), backpack.get("Raft"), null);
-            } else {
-            	System.out.println("in there");
+            } else {          	
             	curr_state = new State(curr_location, 0, 0, backpack.get("Stones"), backpack.get("Raft"), null);
             }
-//        	System.out.println("curr:"+map.get(curr_location));
-//        	if(map.get(curr_location) == 'O') {
-//        		curr_state.setNumOfStones(backpack.get("Stones")+1);
-//        	}
+
+            /* Starting point is (0, 0) */
             Coordinate start_point = new Coordinate(0,0);
-            
-            System.out.println("curr_state_stone_inBack1: " + curr_state.getNumOfStones() + "  raft: " + curr_state.isHave_raft());
             toStart = findPath.aStarSearch(curr_state, start_point, map, backpack, onWater);
 
-            System.out.println("curr_state_stone_inBack2: " + curr_state.getNumOfStones() + "  raft: " + curr_state.isHave_raft());
-            for(int i = 0; i < toStart.size(); i++) {
-            	System.out.println("back coord:"+toStart.get(i).getCurr_coord().getX()+" "+toStart.get(i).getCurr_coord().getY());
-            }
+            /* if possible to return back to start location */
             if (!toStart.isEmpty()) {
-//                System.out.println(direction);
-//                System.out.println(tempDirection);
                 direction = tempDirection;
-//                System.exit(0);
                 moves_back_start = stateToMove(toStart);
             } else {
-//            	if (standingOnWater) {
-//                    backpack.put("Raft", 1);
-//                    System.out.println("decrement there");
-//                }
-//            	backpack.put("Stones", backpack.get("Stones")+used_stone);
-            	used_stone = 0;
-            	
-            	if(used_raft) {
-            		System.out.println("increase raft");
+            	/* set the raft number back to 1 if the return path is impossible to return */
+            	used_stone = 0;            	
+            	if(used_raft) {          		
             		backpack.put("Raft", 1);
             		used_raft = false;
             	}
             }
+
+            /* recalculate the path to Treasure when we cannot find the path to back */
             if (!moves_back_start.isEmpty()) {
-//            	System.exit(0);
             	backHome = true;
-            } else {
-//                if (standingOnWater && map.get(curr_location) != '~') {
-//                	System.out.println("increment here");
-//                    backpack.put("Raft", 1);
-//                }
-//                System.out.println("treasure false");
-            	
+            } else {            	
             	takeTreasure = false;
             }
         } 
 
+        /**
+          * we begin to get the treasure(On the way to treasure) is when we have found 
+          * both the way to treasure and the way to back starting point
+          */
         if (takeTreasure && backHome) {
         	moves_to_corner.clear();
-        	System.out.println("third clear");
-        		suc = true;
         	if(!moves_to_treasure.isEmpty()){
-        		System.out.println("direction:"+direction);
         		currMove = moves_to_treasure.poll();
         	} else {
         		currMove = moves_back_start.poll();
-        		System.out.println("11111direction:"+direction);
-//        		System.exit(0);
+
         	}
         	return currMove;
-        }
+        }        
 
-        // make moves to come back
-        // if (!moves_back_start.isEmpty()) {
-        // 	comingBack = true;
-        // 	currMove = moves_back_start.poll();
-        //     return currMove;
-        // }
-        // if(time==700) System.exit(0);
-        // time++;
-
-
-
-
-        System.out.println(ItemToTake);
-        for (Coordinate t: ItemToTake) {
-        	System.out.print("t:" + t.getX() + " " + t.getY() + "   ");
-        	System.out.println("map_coor:" + map.get(t));
-        }
-        
-
-        // Find the path to item, create goingToItem variable to make sure only find one item
+        /* Find item with stones and raft */
         if (!ItemToTake.isEmpty() && !goingToItem && moves_to_item.isEmpty() && !takeTreasure && !onWater) {
 
         	for (int i = 0; i < ItemToTake.size(); i++) {
+        		/* just retrieve the item, not poll from the list */
         		Coordinate curr_Item = ItemToTake.get(i);
-        		System.out.println("polledItem:" + curr_Item.getX() + " " + curr_Item.getY());
-        		System.out.println("curr coord:"+curr_location.getX()+" "+curr_location.getY());
-            	System.out.println("curr_Item:" + curr_Item.getX()+" "+curr_Item.getY());
-            	System.out.println("item raft:"+backpack.get("Raft"));
             	int initialH = abs(curr_location.getX() - curr_Item.getX()) + abs(curr_location.getY() - curr_Item.getY());
             	State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
             	toItem = findPath.aStarSearch(curr_state, curr_Item, map, backpack, onWater);
@@ -803,240 +680,184 @@ public class Agent {
             }
         }
 
-        // make moves to item
+        /* begin to move to that item */
         if (!moves_to_item.isEmpty()) {
         	moves_to_corner.clear();
-        	System.out.println("four clear");
-            System.out.println("moves in item:" + moves_to_item);
             
             goingToItem = true;
             currMove = moves_to_item.poll();
-            // TODO: lastmove
-            if (currMove == 'c') {
 
+            if (currMove == 'c') {
                 lastMove = currMove;
-            }
-            
+            }           
 
             return currMove;
         }
 
-
-
-
-
-  //       for (Coordinate t: TreeToCut){
-  //       	System.out.println(t.getX()+" "+t.getY());	
-  //       }
-		
-		// if (goingToTree == false) {
-		// 	System.out.println("false");
-		// } else {
-		// 	System.out.println("true");
-		// }
-
-        // TODO: Cut tree
+        /**
+          * Find the path to cut tree
+          * goingToTree: ensure we cut the tree which is just polled from list
+          * moves_to_tree.isEmpty(): Basicly improve effiency
+          * backpack.get("Axe"): The player needs have axe 
+          */
         if (!TreeToCut.isEmpty() && !goingToTree && moves_to_tree.isEmpty() && backpack.get("Axe") == 1 && !onWater) {
         	
             for (int i = 0; i < TreeToCut.size(); i++) {
+            	/* just retrieve the tree, not poll from the list */
                 Coordinate curr_tree = TreeToCut.get(i);
                 int initialH = abs(curr_location.getX() - curr_tree.getX()) + abs(curr_location.getY() - curr_tree.getY());
-                // if (onWater) {
-                //     System.out.println("ooonnnnn wattter");
-                // }
-                System.out.println("curr_tree:" + curr_tree.getX()+" "+curr_tree.getY());
-                System.out.println("tree Raft:" + backpack.get("Raft"));
                 State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
                 toTree = findPath.aStarSearch(curr_state, curr_tree, map, backpack, onWater);
-                System.out.println("tree is not null"+toTree.size());
+
+                /* When find the path to that tree, translate path to commands then break */
                 if (!toTree.isEmpty()) {
                     moves_to_tree = stateToMove(toTree);
                     break;
                 }
             }
-
         }
 
+        /** 
+         * Begin to move towards that tree 
+         * Same with item, must not messy up moves_to_corner list with moves_to_tree
+         */
         if (!moves_to_tree.isEmpty()) {
         	moves_to_corner.clear();
-        	System.out.println("five clear");
         	if (lastMove == 'c') {
 				goingToTree = false;
         	} else {
         		goingToTree = true;
+        		/* lastMove is just retrieve, currMove is poll */ 
         		lastMove = moves_to_tree.peek();
         	}
             
             currMove = moves_to_tree.poll();
-            //System.out.println("currMove2:" + currMove);
             return currMove;
         } else {
             lastMove = currMove;
         }
         
-
-
-
-        System.out.println("exit");
-        if(toTree.isEmpty()) System.out.println("empty");
-
-
-        // TODO: keep expanding map
+        /**
+          * Explore map(expand map) when we cannot find 
+          * the way to treasure and the way back home
+          */
         if (!takeTreasure && !backHome) {
-//        	expandMap(view);
-//        	currMove = expand_map_steps.poll();
             exploreMap(view);
-        	if(moves_to_corner.isEmpty()) {
-        		System.out.println("Empty");
-        		
-        		
-        		for(int i = 0; i < cornerList.size(); i++) {
-        			System.out.println("Coord:"+cornerList.get(i).getX()+" "+cornerList.get(i).getY());
-        		}
-        	} else {
-        		System.out.println("Not Empty");
-        	}
-        	// System.out.println("coord:"+cornerList.peek().getX()+" "+cornerList.peek().getY());
         	if (!moves_to_corner.isEmpty()) {
                 currMove = moves_to_corner.poll();
                 return currMove;
             }
-            // System.out.println("going to explore:"+ cornerList.peek().getX()+" "+cornerList.peek().getY());
+            
         }
 
-        
-
+        /**
+          * After explore the land, we begin to explore water
+          * moves_to_corner.isEmpty(): we know the player has already explored all places on land
+          * onWater: if the player is on water, doesn't need to go the location where he dropped
+          */
         if (!takeTreasure && !backHome && moves_to_corner.isEmpty() && !onWater) {
             int initialH = abs(curr_location.getX() - dropwater.getX()) + abs(curr_location.getY() - dropwater.getY());
             State curr_state = new State(curr_location, 0, initialH, backpack.get("Stones"), backpack.get("Raft"), null);
             todropwater = findPath.aStarSearch(curr_state, dropwater, map, backpack, onWater);
-            if (!todropwater.isEmpty()) moves_to_water = stateToMove(todropwater);
-            
+            if (!todropwater.isEmpty()) moves_to_water = stateToMove(todropwater);           
         }
 
         if (!moves_to_water.isEmpty()) {
             currMove = moves_to_water.poll();
             return currMove;
-            // System.out.println("todropwater:" + dropwater.getX() + " " + dropwater.getY());
-            // System.exit(0);
         }
 
-        
-        if (door.getX() != INITIALCOORD && moves_to_door.isEmpty()) {
-        	System.out.println("going door");
-            State curr_state = new State(curr_location, 0, 0, backpack.get("Stones"), backpack.get("Raft"), null);
-            todoor = findPath.aStarSearch(curr_state, door, map, backpack, onWater);
-            if (!todoor.isEmpty()) moves_to_door = stateToMove(todoor);
-        }
-        if (!moves_to_door.isEmpty()) {
-            currMove = moves_to_door.poll();
-
-            return currMove;
-        }
-        
-        
+        /**
+          * After explored all locations on water, setup onWater false
+          * Because when he explored all locations on water, he is still on water(due to our algorithm)
+          * But in our algorithm, the number of raft has been decremented at that moment
+          * Therefore we give him a free raft
+          */
         onWater = false;
         backpack.put("Raft", 1);
-        //System.exit(0);
         return currMove = 'z';
     }
     
-
-
+    /**
+      * exploreMap(view) - expand map on land or on water
+      */
     public void exploreMap(char[][] view) {
-//    	System.out.println("cornerList: ===========" + cornerList);
-//    	if(cornerList.contains(curr_location)) {
+
+    	/* 
+    	 * scan left top corner of the current view
+    	 * (-2, 2), (-1, 2), (0, 2), (-2, 1), (-1, 1), (0, 1)
+    	 */ 
         for(int i = 0; i < 2; i++){
-//            boolean break_flag = false;
-            for(int j = 0; j < 3; j++){
-//                System.out.println("paaaaaaaaaaaaaasssssssssssssssssssssss44444");
+            boolean break_flag = false;
+            for(int j = 0; j < 3; j++){              
                 Coordinate left_top = new Coordinate(curr_location.getX() - 2 + j, curr_location.getY() + 2 - i);
+                /* If this point has been in cornerExpand list, don't put it in cornerList again */
                 if(!cornerExpand.contains(left_top) && !cornerList.contains(left_top) && !checkObstacle(map.get(left_top), onWater)){
-                    System.out.println("added left_top"+left_top.getX()+" "+left_top.getY());
                     cornerList.add(left_top);
-//                    break_flag = true;
-//                    break;
                 }
             }
-//            if(break_flag) break;
         }
+
+        /*
+         * scan right top of the current view
+         */
         for(int i = 0; i < 2; i++){
-//            boolean break_flag = false;
+            boolean break_flag = false;
             for(int j = 0; j < 3; j++){
                 Coordinate right_top = new Coordinate(curr_location.getX() + 2 - i, curr_location.getY() + 2 - j);
-//                if (checkObstacle(map.get(right_top), onWater)) {
-//                    System.out.println("paaaaaaaaaaaaaasssssssssssssssssssssss11111");
-//                }/
-                if(!cornerExpand.contains(right_top) && !cornerList.contains(right_top) && !checkObstacle(map.get(right_top), onWater)){
-                	System.out.println("added right_top"+right_top.getX()+" "+right_top.getY());
+                if(!cornerExpand.contains(right_top) && !cornerList.contains(right_top) && !checkObstacle(map.get(right_top), onWater)){                   
                     cornerList.add(right_top);
-//                    break_flag = true;
-//                    break;
                 }
             }
-//            if(break_flag) break;
         }
 
+        /*
+         * scan the right bottom location of the current view
+         */
         for(int i = 0; i < 2; i++){
-//            boolean break_flag = false;
-
+            boolean break_flag = false;
             for(int j = 0; j < 3; j++){
-//                System.out.println("paaaaaaaaaaaaaasssssssssssssssssssssss3333333");
                 Coordinate right_bot = new Coordinate(curr_location.getX() + 2 - j, curr_location.getY() - 2 + i);
-                if(!cornerExpand.contains(right_bot) && !cornerList.contains(right_bot) && !checkObstacle(map.get(right_bot), onWater)){
-                	System.out.println("added right_bot"+right_bot.getX()+" "+right_bot.getY());
+                if(!cornerExpand.contains(right_bot) && !cornerList.contains(right_bot) && !checkObstacle(map.get(right_bot), onWater)){                  
                     cornerList.add(right_bot);
-//                    break_flag = true;
-//                    break;
                 }
             }
-//            if(break_flag) break;
         }
 
+        /*
+         * scan left bottom location of the current view
+         */
         for(int i = 0; i < 2; i++){
-//            boolean break_flag = false;
+            boolean break_flag = false;
             for(int j = 0; j < 3; j++){
                 Coordinate left_bot = new Coordinate(curr_location.getX() - 2 + i, curr_location.getY() - 2 + j);
-//                if (checkObstacle(map.get(left_bot), onWater)) {
-//                    System.out.println("paaaaaaaaaaaaaasssssssssssssssssssssss22222");
-//                }
-                if(!cornerExpand.contains(left_bot) && !cornerList.contains(left_bot) && !checkObstacle(map.get(left_bot), onWater)){
-                	System.out.println("added left_bot"+left_bot.getX()+" "+left_bot.getY());
+                if(!cornerExpand.contains(left_bot) && !cornerList.contains(left_bot) && !checkObstacle(map.get(left_bot), onWater)){                 
                     cornerList.add(left_bot);
-//                    break_flag = true;
-//                    break;
                 }
             }
-//            if(break_flag) break;
         }
 
-        // } else {
-        //     System.out.println("oooooooooooooooooooooooooooooooooooooooooooo");
-        // }
-//    	}
+        /* Find which corner we can reach */
     	for(int i = 0; i < cornerList.size(); i++) {
             State curr_state;
+            /* Setup raft depending on whether we have raft */
             if (onWater) {
                 curr_state = new State(curr_location, 0, 0, 0, 1, null);
             } else {
                 curr_state = new State(curr_location, 0, 0, 0, 0, null);
-            }
-    		
+            } 	
+
+            /* Find the path to that point */	
             LinkedList<State> toCorner = findPath.aStarSearch(curr_state, cornerList.get(i), map, backpack, onWater);
             if(!toCorner.isEmpty()) moves_to_corner = stateToMove(toCorner);
             if(!moves_to_corner.isEmpty()) {
-
                 break;
             }
     	}
     	
+    	/* remove the corner location when we reach there */
     	for(int i = 0; i < cornerList.size(); i++) {
-//            System.out.println("corner_cord:" + cornerList.get(i).getX() + " " + cornerList.get(i).getY());
-//            System.out.println("sadasdgaegs");
-
     		if(cornerList.get(i).equals(curr_location)) {
-//                System.out.println("cornerList_size:" + cornerExpand.size());
-//                System.out.println("add into cornerList:" + cornerList.get(i).getX() + " " + cornerList.get(i).getY());
     			cornerExpand.addLast(cornerList.get(i));
                 cornerList.remove(i);
                 break;
@@ -1112,10 +933,6 @@ public class Agent {
                 action = agent.get_action( view );
                 System.out.println(action);
                 out.write( action );
-                System.out.println("Stones:" + backpack.get("Stones"));
-                System.out.println("Raft:" + backpack.get("Raft"));
-                System.out.println("explored:" + explored.get(curr_location));
-                
               }
             }
             catch( IOException e ) {

@@ -16,13 +16,11 @@ public class Astar {
         PriorityQueue<State> toVisit = new PriorityQueue<State>();
         ArrayList<State> visited = new ArrayList<State>();
 
-        // TODO: implement state class
         toVisit.add(start_state);
 
         while(!toVisit.isEmpty()) {
 
             State curr_state = toVisit.poll();
-            // Get the path when we find the goal
             if (curr_state.getCurr_coord().equals(goal)) {
 
                 pathToGoal = traceBack(curr_state, start_state, backpack);
@@ -31,16 +29,9 @@ public class Astar {
 
             visited.add(curr_state);
             for (Coordinate possible: possibleMoves(curr_state.getCurr_coord(), map)) {
-//                State nextState;
-                //System.out.println("possible:" + possible.getX() + " " + possible.getY() + "curr_state:" + curr_state.getCurr_coord().getX() + curr_state.getCurr_coord().getY());
-                //System.out.println("keeeeeeeey:" + backpack.get("Key"));
-                
                 State nextState = new State(possible, curr_state.getG_cost() + 1, 0, curr_state.getNumOfStones(), curr_state.isHave_raft(), curr_state);
-                
 
                 if (map.get(curr_state.getCurr_coord()) == '~' && map.get(possible) != '~' && curr_state.getNumOfStones() == 0) {
-//                	System.out.println("raft num:"+nextState.isHave_raft());
-//                    System.out.println("No  raft  .........!!!!");
                     nextState.setHave_raft(0);
                 }
 
@@ -51,10 +42,8 @@ public class Astar {
                 int hCost = h.calculateHeuristic(nextState, goal, map, backpack, onWater);
                 nextState.setH_cost(hCost);
 
-
-                
                 nextState.setF_cost(nextState.getG_cost() + nextState.getH_cost());
-                //System.out.println(nextState.getF_cost());
+                
                 if (visited.contains(nextState)) {
                     continue;
                 }
@@ -74,26 +63,14 @@ public class Astar {
         int totalCost = 0;
         pathToGoal.add(curr_state);
         while (curr_state.getPre_state() != null) {
-            // System.out.println("{");
-            // System.out.println(curr_state.getPre_state().getCurr_coord().getX()+" "+curr_state.getPre_state().getCurr_coord().getY());
-            // System.out.println("}");
+
             totalCost = totalCost + curr_state.getF_cost();
-            // System.out.println("Pre_fcost:" + curr_state.getPre_state().getF_cost());
-            // System.out.println("Pre_hcost:" + curr_state.getPre_state().getH_cost());
-//            System.out.println("curr_stateinTrace_back:" + curr_state.getCurr_coord().getX()+" "+curr_state.getCurr_coord().getY() + "crr_stones:" + curr_state.getNumOfStones() + "cur_heu:" + curr_state.getH_cost()+" curr fcost"+curr_state.getF_cost());
-            //System.out.println("totalcost:" + totalCost);
             pathToGoal.add(curr_state.getPre_state());
-            curr_state = curr_state.getPre_state();
-            // if(curr_state == null) System.out.println("1");
-            // if(curr_state.getPre_state() == null) System.out.println("2");
-            
+            curr_state = curr_state.getPre_state(); 
         }
-//        System.out.println("totalcost:" + totalCost);
-//        System.out.println("break");
-//        System.exit(0);
+
         if (totalCost >= 100000) {
             pathToGoal.clear();
-            //start_state.setNumOfStones.put("Stones", start_state.getNumOfStones());
             return pathToGoal;
         } else {
             return pathToGoal;
