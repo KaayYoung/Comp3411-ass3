@@ -9,6 +9,7 @@ public class State implements Comparable<State> {
     private int numOfStones;
     private int isHave_raft;
     private State pre_state;
+    private boolean standingOnWater;
 
     public State(Coordinate coord, int g_cost, int h_cost, int numOfStones, int isHave_raft, State pre_state) {
         this.curr_coord = coord;
@@ -24,7 +25,16 @@ public class State implements Comparable<State> {
         return this.getF_cost() - o.getF_cost();
     }
 
-    public Coordinate getCurr_coord() {
+ 
+	public boolean isStandingOnWater() {
+		return standingOnWater;
+	}
+
+	public void setStandingOnWater(boolean standingOnWater) {
+		this.standingOnWater = standingOnWater;
+	}
+
+	public Coordinate getCurr_coord() {
         return curr_coord;
     }
 
