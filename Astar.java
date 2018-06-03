@@ -39,8 +39,8 @@ public class Astar {
                 
 
                 if (map.get(curr_state.getCurr_coord()) == '~' && map.get(possible) != '~' && curr_state.getNumOfStones() == 0) {
-                	System.out.println("raft num:"+nextState.isHave_raft());
-                    System.out.println("No  raft  .........!!!!");
+//                	System.out.println("raft num:"+nextState.isHave_raft());
+//                    System.out.println("No  raft  .........!!!!");
                     nextState.setHave_raft(0);
                 }
 
@@ -80,7 +80,7 @@ public class Astar {
             totalCost = totalCost + curr_state.getF_cost();
             // System.out.println("Pre_fcost:" + curr_state.getPre_state().getF_cost());
             // System.out.println("Pre_hcost:" + curr_state.getPre_state().getH_cost());
-            System.out.println("curr_stateinTrace_back:" + curr_state.getCurr_coord().getX()+" "+curr_state.getCurr_coord().getY() + "crr_stones:" + curr_state.getNumOfStones() + "cur_heu:" + curr_state.getH_cost()+" curr fcost"+curr_state.getF_cost());
+//            System.out.println("curr_stateinTrace_back:" + curr_state.getCurr_coord().getX()+" "+curr_state.getCurr_coord().getY() + "crr_stones:" + curr_state.getNumOfStones() + "cur_heu:" + curr_state.getH_cost()+" curr fcost"+curr_state.getF_cost());
             //System.out.println("totalcost:" + totalCost);
             pathToGoal.add(curr_state.getPre_state());
             curr_state = curr_state.getPre_state();
@@ -88,7 +88,7 @@ public class Astar {
             // if(curr_state.getPre_state() == null) System.out.println("2");
             
         }
-        System.out.println("totalcost:" + totalCost);
+//        System.out.println("totalcost:" + totalCost);
 //        System.out.println("break");
 //        System.exit(0);
         if (totalCost >= 100000) {
